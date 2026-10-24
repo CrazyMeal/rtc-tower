@@ -1,8 +1,9 @@
-import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse, readFavorites, countdown} from './core.mjs?v=2';
+import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse, readFavorites, countdown, serviceType} from './core.mjs?v=3';
 const $ = selector => document.querySelector(selector);
 const timeFormat = new Intl.DateTimeFormat('fr-CA', {timeZone: 'America/Toronto', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'});
 const cache = new Map();
 let favorites = [], savingAllowed = true, refreshing = false, lastRefresh = 0, renaming = null;
+const expanded = new Set();
 function storageWarning(message) { $('#storage-warning').textContent = message; $('#storage-warning').hidden = false; }
 try { favorites = readFavorites(localStorage.getItem(STORAGE_KEY)); }
 catch { savingAllowed = false; storageWarning('Vos favoris enregistrés ne sont pas accessibles ou sont invalides. Ils sont conservés tels quels ; les changements de cette session ne seront pas sauvegardés.'); }
@@ -31,12 +32,21 @@ function sourceLink(f) {
 }
 function rename(f) { renaming = favoriteKey(f); $('#rename-input').value = f.label; $('#rename-dialog').showModal(); $('#rename-input').focus(); }
 function move(index, offset) { [favorites[index], favorites[index + offset]] = [favorites[index + offset], favorites[index]]; save(); render(); const card = document.querySelectorAll('.stop-card')[index + offset]; card?.querySelector(offset < 0 ? '[data-up]' : '[data-down]')?.focus(); }
+function departureBox(h, state, stale, kind) {
+  const remaining = countdown(h), live = h.ntr && !h.annule && !state.error && !stale;
+  const box = el('div', `${kind}${h.annule ? ' cancelled' : ''}`), eta = el('div', `eta${remaining === 'Imminent' ? ' imminent' : ''}`), value = el('span', 'eta-value', remaining);
+  if (live) { const waves = el('img', 'realtime-icon'); waves.src = './realtime.svg'; waves.alt = ''; waves.setAttribute('aria-hidden', 'true'); value.append(waves); eta.classList.add('has-realtime'); }
+  eta.append(value);
+  if (remaining !== 'Imminent') eta.append(el('span', 'unit', 'min'));
+  const meta = el('div', live ? 'departure-meta sr-only' : 'departure-meta'); meta.append(document.createTextNode(h.annule ? 'Annulé' : state.error || stale ? 'À confirmer' : h.ntr ? 'Temps réel' : 'Planifié'));
+  box.append(eta, el('div', 'clock-time', timeFormat.format(new Date(h.depart))), meta); return box;
+}
 function render() {
   const list = $('#favorites'); list.replaceChildren(); $('#count').textContent = favorites.length; $('#empty').hidden = favorites.length > 0;
   favorites.forEach((f, index) => {
     const key = favoriteKey(f), state = cache.get(key), card = el('article', 'stop-card');
     const heading = el('div', 'stop-heading'), title = el('div'), controls = el('div', 'card-actions');
-    title.append(el('span', 'stop-number', `ARRÊT ${f.stop}${f.mode === 'all' ? ' · TOUS LES PARCOURS' : ''}`), el('h3', '', f.label || f.name), el('p', 'stop-subtitle', f.label ? f.name : state?.groups?.[0]?.arret.description || ''));
+    title.append(el('h3', '', f.label || f.name), el('p', 'stop-subtitle', `Arrêt ${f.stop}${f.mode === 'all' ? ' · tous les parcours' : ''}${f.label ? ` · ${f.name}` : ''}`));
     const up = action('↑', `Monter ${f.label || f.name}`, () => move(index, -1), index === 0); up.dataset.up = '';
     const down = action('↓', `Descendre ${f.label || f.name}`, () => move(index, 1), index === favorites.length - 1); down.dataset.down = '';
     controls.append(up, down, action('✎', `Renommer ${f.label || f.name}`, () => rename(f)), action('×', `Supprimer ${f.label || f.name}`, () => { favorites = favorites.filter(item => favoriteKey(item) !== key); cache.delete(key); save(); render(); $('#refresh').focus(); }));
@@ -45,27 +55,23 @@ function render() {
     if (state?.error || stale) { const error = el('p', 'error-note', `${state?.error || 'Les données ne sont plus à jour.'}${state?.groups ? ' Derniers passages reçus ci-dessous, à confirmer.' : ''}`); card.append(error); }
     if (state?.groups) {
       for (const group of state.groups) {
-        const route = el('section', 'route'), routeHeading = el('div', 'route-heading');
+        const route = el('section', 'route'), type = serviceType(group.parcours.codeTypeService);
+        const badge = el('span', `route-badge ${type.className}`, group.parcours.noParcours); badge.title = type.name;
         const direction = el('div', 'direction', group.parcours.descriptionDirection || 'Destination non précisée'); direction.setAttribute('aria-label', `Direction ${group.parcours.descriptionDirection || 'non précisée'}`);
-        routeHeading.append(el('span', 'route-badge', group.parcours.noParcours), direction); route.append(routeHeading);
+        route.append(badge, direction);
         const departures = group.horaires.filter(h => countdown(h) !== null).slice(0, 3);
         if (group.arretNonDesservi || group.descenteSeulement) route.append(el('p', 'route-message', group.arretNonDesservi ? 'Arrêt non desservi actuellement.' : 'Descente seulement à cet arrêt.'));
         else if (!departures.length) route.append(el('p', 'route-message', 'Aucun prochain passage annoncé.'));
         else {
-          const row = el('div', 'departures');
-          for (const h of departures) {
-            const box = el('div', `departure${h.annule ? ' cancelled' : ''}`), remaining = countdown(h), eta = el('div', `eta${remaining === 'Imminent' ? ' imminent' : ''}`);
-            const value = el('span', 'eta-value', remaining);
-            if (h.ntr && !h.annule && !state.error && !stale) {
-              const waves = el('img', 'realtime-icon'); waves.src = './realtime.svg'; waves.alt = ''; waves.setAttribute('aria-hidden', 'true');
-              value.append(waves); eta.classList.add('has-realtime');
-            }
-            eta.append(value);
-            if (remaining !== 'Imminent') eta.append(el('span', 'unit', 'min'));
-            const meta = el('div', h.ntr && !h.annule && !state.error && !stale ? 'departure-meta sr-only' : 'departure-meta'); meta.append(document.createTextNode(h.annule ? 'Annulé' : state.error || stale ? 'À confirmer' : h.ntr ? 'Temps réel' : 'Planifié'));
-            box.append(eta, el('div', 'clock-time', timeFormat.format(new Date(h.depart))), meta); row.append(box);
+          const routeKey = `${key}:${group.parcours.noParcours}:${group.parcours.codeDirection}`, [next, ...later] = departures;
+          route.append(departureBox(next, state, stale, 'departure'));
+          if (later.length) {
+            const open = expanded.has(routeKey), list = el('div', 'later-departures'); list.id = `later-${index}-${group.parcours.noParcours}-${group.parcours.codeDirection}`; list.hidden = !open;
+            for (const h of later) list.append(departureBox(h, state, stale, 'later'));
+            const more = el('button', 'more-button', open ? '−' : `+${later.length}`); more.type = 'button'; more.setAttribute('aria-expanded', String(open)); more.setAttribute('aria-controls', list.id); more.title = open ? 'Masquer les passages suivants' : 'Voir les passages suivants'; more.setAttribute('aria-label', more.title);
+            more.addEventListener('click', () => { if (expanded.has(routeKey)) expanded.delete(routeKey); else expanded.add(routeKey); render(); document.getElementById(list.id)?.parentElement.querySelector('.more-button')?.focus(); });
+            route.append(more, list);
           }
-          route.append(row);
         }
         card.append(route);
       }

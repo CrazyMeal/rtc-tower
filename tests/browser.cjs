@@ -6,7 +6,7 @@ const context=await browser.newContext({viewport:{width:1440,height:1000}});
 const page=await context.newPage();
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 let fail=false, requests=0;
-const group=(route='70',direction='1')=>({arret:{noArret:'5419',nom:'Galeries/5419',description:'Lebourgneuf / des Galeries'},parcours:{noParcours:route,codeDirection:direction,descriptionDirection:route==='70'?'Val-Bélair':'Terminus Beauport'},horaires:[{depart:new Date(Date.now()+5*60000).toISOString(),ntr:true,annule:false},{depart:new Date(Date.now()+23*60000).toISOString(),ntr:true,annule:false},{depart:new Date(Date.now()+51*60000).toISOString(),ntr:false,annule:false}]});
+const group=(route='70',direction='1')=>({arret:{noArret:'5419',nom:'Galeries/5419',description:'Lebourgneuf / des Galeries'},parcours:{noParcours:route,codeDirection:direction,codeTypeService:route==='70'?0:4,descriptionDirection:route==='70'?'Val-Bélair':'Terminus Beauport'},horaires:[{depart:new Date(Date.now()+5*60000).toISOString(),ntr:true,annule:false},{depart:new Date(Date.now()+23*60000).toISOString(),ntr:true,annule:false},{depart:new Date(Date.now()+51*60000).toISOString(),ntr:false,annule:false}]});
 await page.route('https://api-iv.rtcquebec.ca/**',route=>{requests++;return route.fulfill({status:fail?503:200,contentType:'application/json',body:JSON.stringify(route.request().url().includes('ListeBorne')?[group(),group('803','0')]:group())})});
 await page.goto('http://127.0.0.1:8080');
 await page.getByText('Temps réel',{exact:true}).first().waitFor();
@@ -17,6 +17,8 @@ await page.locator('#stop-url').fill('https://example.com/stop');await page.loca
 const before=requests;await page.locator('#stop-url').fill(url);await page.locator('#add-submit').click();await page.getByText('déjà dans vos favoris.',{exact:false}).waitFor();assert.equal(requests,before);
 await page.locator('#stop-mode').selectOption('all');await page.locator('#stop-label').fill('Retour maison');await page.locator('#add-submit').click();await page.getByText('Retour maison ajouté',{exact:false}).waitFor();
 assert.equal(await page.locator('.stop-card').count(),2);assert.equal(await page.locator('.route-badge').count(),3);
+assert.equal(await page.locator('.route-badge.is-metrobus').count(),1);assert.equal(await page.locator('.route > .departure').count(),3);
+const more=page.locator('.more-button').first();assert.equal(await more.getAttribute('aria-expanded'),'false');await more.click();assert.equal(await page.locator('.later-departures:not([hidden]) .later').count(),2);
 await page.getByRole('button',{name:'Monter Retour maison'}).click();assert.equal(await page.locator('.stop-card h3').first().innerText(),'Retour maison');
 await page.getByRole('button',{name:'Renommer Retour maison'}).click();await page.locator('#rename-input').fill('Mes départs');await page.getByRole('button',{name:'Enregistrer',exact:true}).click();
 await page.reload();await page.getByText('Temps réel',{exact:true}).first().waitFor();assert.equal(await page.locator('.stop-card h3').first().innerText(),'Mes départs');

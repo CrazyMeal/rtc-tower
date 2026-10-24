@@ -49,3 +49,12 @@ export function countdown(departure, now = Date.now()) {
   const minutes = Math.floor(seconds / 60);
   return minutes < 1 ? 'Imminent' : String(minutes);
 }
+const SERVICE_TYPES = {
+  0: {name: 'leBus', className: 'is-lebus'},
+  1: {name: 'eXpress', className: 'is-express'},
+  2: {name: 'Parcours école', className: 'is-lebus'},
+  3: {name: 'Parcours industriels', className: 'is-lebus'},
+  4: {name: 'Métrobus', className: 'is-metrobus'},
+  6: {name: 'Couche-tard', className: 'is-couchetard'}
+};
+export function serviceType(code) { return SERVICE_TYPES[code] || SERVICE_TYPES[0]; }
