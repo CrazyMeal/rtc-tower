@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseStopUrl, quebecDate, apiUrl, readFavorites, validateResponse, countdown, serviceType, EXAMPLE} from '../core.mjs';
+import {parseStopUrl, quebecDate, apiUrl, validateResponse, countdown, serviceType, EXAMPLE} from '../core.mjs';
 const url = 'https://www.rtcquebec.ca/horaires-et-trajets/horaires-des-bus/tous-les-parcours/70/1-val-belair/5419-galeries5419';
 test('extracts identifiers from the supplied RTC stop link', () => {
   assert.deepEqual(parseStopUrl(url + '?test=1#horaire'), {route:'70',direction:'1',stop:'5419'});
@@ -20,12 +20,6 @@ test('constructs route and whole-stop requests with a fresh local date', () => {
   assert.equal(route.searchParams.get('date'),'20261024'); assert.equal(route.searchParams.get('codeDirection'),'1');
   const all = new URL(apiUrl({...EXAMPLE,mode:'all'}, now));
   assert.ok(all.pathname.endsWith('/ListeBorneVirtuelle_Arret')); assert.equal(all.searchParams.has('noParcours'),false);
-});
-test('preserves intentionally empty favorites and validates saved data', () => {
-  assert.equal(readFavorites(null).length,1);
-  assert.deepEqual(readFavorites('{"version":1,"favorites":[]}'),[]);
-  assert.deepEqual(readFavorites(JSON.stringify({version:1,favorites:[EXAMPLE]})),[EXAMPLE]);
-  for (const input of ['oops', '{"version":2,"favorites":[]}', JSON.stringify({version:1,favorites:[EXAMPLE,EXAMPLE]}), JSON.stringify({version:1,favorites:[{...EXAMPLE,stop:'<script>'}]})]) assert.throws(() => readFavorites(input));
 });
 test('validates stop and direction and rejects malformed RTC responses', () => {
   const group = {arret:{noArret:'5419'},parcours:{noParcours:'70',codeDirection:'1'},horaires:[]};

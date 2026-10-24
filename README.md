@@ -12,6 +12,12 @@ python3 -m http.server 8080 --bind 0.0.0.0
 
 Servez le dossier par HTTP (les modules JavaScript ne se chargent pas correctement via `file://`). L’interface contient initialement le parcours 70 vers Val-Bélair à l’arrêt Galeries / 5419. Ajoutez un lien français de page d’arrêt RTC pour suivre le parcours sélectionné ou tous les parcours de cet arrêt. Les favoris peuvent être renommés, réordonnés et supprimés.
 
+## Groupes d’arrêts
+
+Un groupe (Travail, Retour, Week-end…) choisit quels favoris afficher selon le jour et l’heure. Chaque groupe a des horaires « jours + dès HH:MM » : il reste affiché jusqu’à l’horaire suivant d’un groupe, même le lendemain. Les pastilles sous « Mes arrêts » permettent de changer de groupe à la main ; ce choix tient jusqu’au prochain horaire, puis l’affichage automatique reprend (« Revenir en auto » pour l’anticiper). Un favori peut appartenir à plusieurs groupes (menu ⋯ d’une tuile › Groupes) ; « Tous » montre toujours l’ensemble. Sans groupe, rien ne change.
+
+Organisation du code : `core.mjs` (RTC), `store.mjs` (favoris et groupes, format v2 migré depuis v1), `schedule.mjs` (résolution du groupe actif, heure de Québec), `tiles.mjs` et `groups-ui.mjs` (interface), `app.mjs` (orchestration). Les trois premiers sont purs et testés avec Node.
+
 Les favoris sont conservés dans le `localStorage` de cette origine et de ce navigateur. Aucun compte, synchronisation, import ou export dans cette version.
 
 ## Vérifier
@@ -49,6 +55,8 @@ Le serveur doit être démarré sur le port 8080. Ces tests utilisent Chromium i
 npm install --prefix /tmp/rtc-browser --cache /tmp/rtc-npm-cache --no-audit --no-fund playwright@1.64.1
 NODE_PATH=/tmp/rtc-browser/node_modules node tests/browser.cjs
 ```
+
+`tests/browser-groups.cjs` couvre les groupes avec une horloge simulée (`page.clock`) : bascule automatique, choix manuel, création, appartenance, suppression.
 
 Les captures de test sont écrites dans `/tmp/rtc-desktop.png` et `/tmp/rtc-mobile.png`. L’installation de Playwright sert uniquement aux tests ; aucun paquet npm n’est nécessaire pour utiliser la page.
 

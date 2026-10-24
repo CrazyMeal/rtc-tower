@@ -30,19 +30,6 @@ export function validateResponse(data, favorite) {
   }
   return groups;
 }
-export function readFavorites(raw) {
-  if (raw === null) return [{...EXAMPLE}];
-  const saved = JSON.parse(raw);
-  if (saved.version !== 1 || !Array.isArray(saved.favorites)) throw new Error('Format de favoris inconnu.');
-  const unique = new Set();
-  return saved.favorites.map(f => {
-    if (!f || !/^\d{1,6}$/.test(f.stop) || !/^\d{1,4}$/.test(f.route) || !/^\d{1,2}$/.test(f.direction) || !['route','all'].includes(f.mode) || typeof f.label !== 'string' || f.label.length > 60 || typeof f.name !== 'string') throw new Error('Favoris enregistrés invalides.');
-    const key = favoriteKey(f);
-    if (unique.has(key)) throw new Error('Favoris en double.');
-    unique.add(key);
-    return {stop: f.stop, route: f.route, direction: f.direction, mode: f.mode, label: f.label, name: f.name};
-  });
-}
 export function countdown(departure, now = Date.now()) {
   const seconds = (Date.parse(departure.depart) - now) / 1000;
   if (seconds < 0) return null;

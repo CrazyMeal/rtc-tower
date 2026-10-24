@@ -37,3 +37,30 @@
 .tile.is-idle>:not(.tile-menu){opacity:.55}
 .tile.is-idle .route-badge{filter:saturate(.6)}
 .tile.is-idle .route-message{max-width:96px;line-height:1.35;color:var(--muted)}
+
+/* View bar and groups */
+.view-bar{margin:-6px 0 18px}
+.view-pills{display:inline-flex;flex-wrap:wrap;gap:8px;vertical-align:middle}
+.view-pill{border:1px solid var(--line);background:var(--white);color:var(--ink);border-radius:999px;padding:7px 14px;font-size:13px;min-height:34px}
+.view-pill[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.view-new{margin-left:8px;color:var(--muted)}
+.view-status{margin:8px 0 0;font-size:12px;color:var(--muted);line-height:1.6}
+.view-status .text-button{padding:0 2px;font-size:12px;text-decoration:underline;text-underline-offset:3px}
+.group-empty{border:1px dashed #b9c3b7;border-radius:12px;padding:22px;font-size:13px;line-height:1.6;color:var(--muted)}
+.menu-label{padding:8px 10px 2px;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.menu-toggle[aria-pressed=true]::before{content:'✓ '}
+.menu-toggle[aria-pressed=false]::before{content:'\00a0\00a0\00a0'}
+#group-dialog{max-width:520px;max-height:calc(100dvh - 32px);overflow:auto}
+.group-fieldset{border:1px solid var(--line);border-radius:10px;margin:18px 0 0;padding:6px 14px 14px}
+.group-fieldset legend{font-size:12px;font-weight:600;padding:0 6px}
+.trigger-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:10px}
+.day-buttons{display:flex;gap:4px}
+.day-button{width:30px;height:30px;border:1px solid var(--line);border-radius:50%;background:var(--white);color:var(--muted);font-size:12px;padding:0}
+.day-button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.trigger-from{font-size:12px;color:var(--muted)}
+.trigger-row input[type=time]{width:auto;min-height:34px;padding:6px 8px}
+.member{display:flex;align-items:center;gap:10px;margin:0;padding:7px 0;font-weight:400;font-size:13px}
+.member input{width:auto;min-height:0}
+.danger{color:#9c3c17;margin-right:auto;padding-left:0}
+@media(max-width:740px){.view-bar{margin-bottom:14px}}
+#group-dialog .dialog-actions{margin-top:22px}

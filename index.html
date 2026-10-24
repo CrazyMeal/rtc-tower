@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#152b2a">
   <meta name="description" content="Vos arrêts RTC et les prochains passages, au même endroit.">
   <title>Mes passages · RTC Tower</title>
-  <link rel="stylesheet" href="styles.css?v=9">
-  <script type="module" src="app.mjs?v=9"></script>
+  <link rel="stylesheet" href="styles.css?v=10">
+  <script type="module" src="app.mjs?v=10"></script>
 </head>
 <body>
   <header class="masthead"><a class="brand" href="./" aria-label="RTC Tower, accueil"><span class="brand-mark" aria-hidden="true"><svg class="out-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span> rtc tower<span class="brand-dot">.</span></a><span class="city">QUÉBEC</span></header>
@@ -15,8 +15,10 @@
     <div class="workspace">
       <section class="favorites-section" aria-labelledby="favorites-title">
         <div class="section-heading"><h1 id="favorites-title">Mes arrêts <span id="count" class="count">0</span></h1><div class="refresh-group"><span id="refresh-status" class="refresh-status" role="status"></span><button id="refresh" class="text-button" type="button"><span aria-hidden="true">↻</span> Actualiser</button></div></div>
+        <div id="view-bar" class="view-bar"></div>
         <p id="storage-warning" class="notice" role="alert" hidden></p>
         <div id="favorites"></div>
+        <p id="group-empty" class="group-empty" hidden>Aucun arrêt dans <strong id="group-empty-name"></strong>. Ajoutez-en depuis le menu ⋯ d’une tuile (Groupes) dans la vue « Tous », ou avec le formulaire.</p>
         <div id="empty" class="empty" hidden><h3>Aucun arrêt</h3><button id="first-add" class="text-button" type="button">Ajouter un arrêt →</button></div>
       </section>
       <aside>
@@ -34,5 +36,10 @@
   </main>
   <footer><span>Données du RTC</span><span>Favoris enregistrés dans ce navigateur</span></footer>
   <dialog id="rename-dialog"><form id="rename-form"><h2>Renommer cet arrêt</h2><label for="rename-input">Nom personnalisé</label><input id="rename-input" maxlength="60" autocomplete="off"><p class="small-note">Laissez vide pour utiliser le nom du RTC.</p><div class="dialog-actions"><button type="button" id="rename-cancel" class="text-button">Annuler</button><button class="primary-button" type="submit">Enregistrer</button></div></form></dialog>
+  <dialog id="group-dialog"><form id="group-form"><h2 id="group-title">Nouveau groupe</h2><label for="group-name">Nom</label><input id="group-name" maxlength="40" placeholder="Ex. Travail" autocomplete="off">
+    <fieldset class="group-fieldset"><legend>Quand l’afficher</legend><p class="small-note">Un groupe reste affiché jusqu’à l’horaire suivant d’un groupe, même le lendemain.</p><div id="trigger-list"></div><p id="no-trigger" class="small-note" hidden>Sans horaire, ce groupe ne s’affiche que si vous le choisissez.</p><button type="button" id="add-trigger" class="text-button">+ Ajouter un horaire</button></fieldset>
+    <fieldset class="group-fieldset"><legend>Arrêts du groupe</legend><div id="member-list"></div></fieldset>
+    <p id="group-error" class="form-status error" role="alert"></p>
+    <div class="dialog-actions"><button type="button" id="group-delete" class="text-button danger">Supprimer</button><button type="button" id="group-cancel" class="text-button">Annuler</button><button class="primary-button" type="submit">Enregistrer</button></div></form></dialog>
 </body>
 </html>
