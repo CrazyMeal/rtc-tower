@@ -33,10 +33,15 @@ function sourceLink(f, group) {
 }
 function rename(f) { renaming = favoriteKey(f); $('#rename-input').value = f.label; $('#rename-dialog').showModal(); $('#rename-input').focus(); }
 function move(index, offset) { [favorites[index], favorites[index + offset]] = [favorites[index + offset], favorites[index]]; save(); render(); document.querySelector(`.tile[data-favorite="${favoriteKey(favorites[index + offset])}"] summary`)?.focus(); }
+const realtimeIcon = () => {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('viewBox', '0 0 20 20'); svg.setAttribute('class', 'realtime-icon'); svg.setAttribute('aria-hidden', 'true');
+  for (const [name, d] of [['wave-inner', 'M2 8a10 10 0 0 1 10 10'], ['wave-outer', 'M2 2a16 16 0 0 1 16 16']]) { const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('class', name); path.setAttribute('d', d); svg.append(path); }
+  return svg;
+};
 function departureBox(h, state, stale, kind) {
   const remaining = countdown(h), live = h.ntr && !h.annule && !state.error && !stale;
   const box = el('div', `${kind}${h.annule ? ' cancelled' : ''}`), eta = el('div', `eta${remaining === 'Imminent' ? ' imminent' : ''}`), value = el('span', 'eta-value', remaining);
-  if (live) { const waves = el('img', 'realtime-icon'); waves.src = './realtime.svg'; waves.alt = ''; waves.setAttribute('aria-hidden', 'true'); value.append(waves); eta.classList.add('has-realtime'); }
+  if (live) { value.append(realtimeIcon()); eta.classList.add('has-realtime'); }
   eta.append(value);
   if (remaining !== 'Imminent') eta.append(el('span', 'unit', 'min'));
   const meta = el('div', live ? 'departure-meta sr-only' : 'departure-meta'); meta.append(document.createTextNode(h.annule ? 'Annulé' : state.error || stale ? 'À confirmer' : h.ntr ? 'Temps réel' : 'Planifié'));

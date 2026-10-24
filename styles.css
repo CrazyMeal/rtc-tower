@@ -25,3 +25,9 @@
 .menu-item{border:0;background:transparent;text-align:left;padding:8px 10px;border-radius:6px;font-size:12px;color:var(--ink)}
 .menu-item:hover:not(:disabled){background:var(--paper)}
 @media(max-width:740px){#favorites{grid-template-columns:1fr}.tile{padding:12px 14px}}
+
+/* Animated realtime waves */
+.realtime-icon path{fill:none;stroke:var(--green);stroke-width:3.2;stroke-linecap:round;animation:wave 1.8s ease-in-out infinite}
+.realtime-icon .wave-outer{animation-delay:.3s}
+@keyframes wave{0%,100%{opacity:.25}30%,60%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.realtime-icon path{animation:none;opacity:1}}
