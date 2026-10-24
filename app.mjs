@@ -69,8 +69,8 @@ function tile(f, index, group, state, stale) {
   if (!group) { card.append(el('p', 'route-message', state?.error || 'Recherche des prochains passages…')); return card; }
   if (state.error || stale) card.append(el('p', 'tile-note', `${state.error || 'Les données ne sont plus à jour.'} Derniers passages à confirmer.`));
   const departures = group.horaires.filter(h => countdown(h) !== null).slice(0, 3);
-  if (group.arretNonDesservi || group.descenteSeulement) card.append(el('p', 'route-message', group.arretNonDesservi ? 'Arrêt non desservi actuellement.' : 'Descente seulement à cet arrêt.'));
-  else if (!departures.length) card.append(el('p', 'route-message', 'Aucun prochain passage annoncé.'));
+  if (group.arretNonDesservi || group.descenteSeulement) { card.classList.add('is-idle'); card.append(el('p', 'route-message', group.arretNonDesservi ? 'Arrêt non desservi' : 'Descente seulement')); }
+  else if (!departures.length) { card.classList.add('is-idle'); card.append(el('p', 'route-message', 'Aucun passage annoncé')); }
   else {
     const [next, ...later] = departures; card.append(departureBox(next, state, stale, 'departure'));
     if (later.length) {
