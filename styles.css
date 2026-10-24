@@ -4,15 +4,17 @@
 /* Tiles: one per route, two columns */
 #favorites{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;align-items:start}
 .refresh-group{display:flex;align-items:center;gap:14px}.refresh-status{font-size:11px;color:var(--muted)}
-.tile{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"badge dir eta menu" "badge stop more more" "note note note note" "later later later later";align-items:center;column-gap:12px;row-gap:2px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--white)}
+.tile{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"badge info eta menu" "badge info eta more" "note note note note" "later later later later";grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;column-gap:16px;row-gap:0;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--white)}
 .tile .route-badge{grid-area:badge;align-self:center}.tile .route-badge.is-unknown{background:#8a9388}
-.tile .direction{grid-area:dir;display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;min-width:0}
+.tile-info{grid-area:info;display:flex;flex-direction:column;gap:3px;min-width:0}
+.tile .direction{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:700;min-width:0}
 .tile .direction span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .direction-arrow{width:14px;height:14px;flex-shrink:0;color:var(--muted)}
-.stop-line{grid-area:stop;font-size:11px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stop-line{font-size:11px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .stop-line a{text-decoration:none}.stop-line a:hover{text-decoration:underline;text-underline-offset:3px}
-.tile .departure{grid-area:eta;text-align:right;padding:0;border:0}
-.tile .more-button{grid-area:more;justify-self:end;margin-top:4px}
+.tile .departure{grid-area:eta;text-align:right;padding:0;border:0;line-height:1;align-self:center}
+.tile .departure .clock-time{margin-top:4px}
+.tile .more-button{grid-area:more;justify-self:end;align-self:end}
 .tile .route-message{grid-area:eta;max-width:170px;font-size:11px;text-align:right}
 .tile-note{grid-area:note;margin:8px 0 0;font-size:11px;line-height:1.5;background:#fff0db;color:#795018;padding:7px 10px;border-radius:6px}
 .tile .later-departures{grid-area:later;margin-top:10px}

@@ -60,7 +60,7 @@ function tile(f, index, group, state, stale) {
   const destination = group?.parcours.descriptionDirection || (group ? 'Destination non précisée' : '');
   const direction = el('div', 'direction'); if (group) { direction.append(arrow(), el('span', '', destination)); direction.title = destination; direction.setAttribute('aria-label', `Direction ${group.parcours.descriptionDirection || 'non précisée'}`); }
   const stop = el('div', 'stop-line'), link = el('a', '', `${f.label || String(group?.arret.nom || f.name).replace(/\s*\/?\s*\d{4,}$/, '')} · ${f.stop}`); link.href = sourceLink(f, group); link.target = '_blank'; link.rel = 'noopener noreferrer'; link.title = 'Voir sur le site du RTC'; stop.append(link);
-  card.append(badge, direction, stop, menu(f, index, menuKey));
+  const info = el('div', 'tile-info'); info.append(direction, stop); card.append(badge, info, menu(f, index, menuKey));
   if (!group) { card.append(el('p', 'route-message', state?.error || 'Recherche des prochains passages…')); return card; }
   if (state.error || stale) card.append(el('p', 'tile-note', `${state.error || 'Les données ne sont plus à jour.'} Derniers passages à confirmer.`));
   const departures = group.horaires.filter(h => countdown(h) !== null).slice(0, 3);
