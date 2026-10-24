@@ -54,9 +54,15 @@ function render() {
         else {
           const row = el('div', 'departures');
           for (const h of departures) {
-            const box = el('div', `departure${h.annule ? ' cancelled' : ''}`), remaining = countdown(h), eta = el('div', `eta${remaining === 'Imminent' ? ' imminent' : ''}`, remaining);
+            const box = el('div', `departure${h.annule ? ' cancelled' : ''}`), remaining = countdown(h), eta = el('div', `eta${remaining === 'Imminent' ? ' imminent' : ''}`);
+            const value = el('span', 'eta-value', remaining);
+            if (h.ntr && !h.annule && !state.error && !stale) {
+              const waves = el('img', 'realtime-icon'); waves.src = './realtime.svg'; waves.alt = ''; waves.setAttribute('aria-hidden', 'true');
+              value.append(waves); eta.classList.add('has-realtime');
+            }
+            eta.append(value);
             if (remaining !== 'Imminent') eta.append(el('span', 'unit', 'min'));
-            const meta = el('div', 'departure-meta'); meta.append(el('span', h.ntr ? 'live-dot' : 'scheduled-dot'), document.createTextNode(h.annule ? 'Annulé' : state.error || stale ? 'À confirmer' : h.ntr ? 'Temps réel' : 'Planifié'));
+            const meta = el('div', 'departure-meta'); meta.append(document.createTextNode(h.annule ? 'Annulé' : state.error || stale ? 'À confirmer' : h.ntr ? 'Temps réel' : 'Planifié'));
             box.append(eta, meta, el('div', 'clock-time', timeFormat.format(new Date(h.depart)))); row.append(box);
           }
           route.append(row);
