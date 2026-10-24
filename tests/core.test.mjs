@@ -41,3 +41,19 @@ test('countdowns use absolute departure time and exclude past passages', () => {
   assert.equal(countdown({depart:'2026-10-24T16:00:30-04:00'},now),'Imminent');
   assert.equal(countdown({depart:'2026-10-24T15:59:59-04:00'},now),null);
 });
+
+
+test('accepts a dated RTC stop link and queries today instead of the link date', () => {
+  const dated = 'https://www.rtcquebec.ca/horaires-et-trajets/horaires-des-bus/tous-les-parcours/71/0-terminus-gare-du-palais/5015-r-bourassa5015/2026-10-24';
+  for (const suffix of ['', '/', '?view=all#horaire']) {
+    const f = parseStopUrl(dated + suffix);
+    assert.deepEqual(f, {route:'71', direction:'0', stop:'5015'});
+    const request = new URL(apiUrl({...f, mode:'route'}, new Date('2026-10-26T16:00:00Z')));
+    assert.equal(request.searchParams.get('date'), '20261026');
+    assert.equal(request.searchParams.get('noArret'), '5015');
+    assert.equal(request.searchParams.get('codeDirection'), '0');
+  }
+  for (const suffix of ['/extra', '/2026-10-24/extra', '/2026-10']) {
+    assert.throws(() => parseStopUrl(url + suffix));
+  }
+});

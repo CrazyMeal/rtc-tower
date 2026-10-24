@@ -5,7 +5,7 @@ export function parseStopUrl(value) {
   let url;
   try { url = new URL(value.trim()); } catch { throw new Error('Collez un lien complet vers une page d’arrêt du RTC.'); }
   if (url.protocol !== 'https:' || !['www.rtcquebec.ca', 'rtcquebec.ca'].includes(url.hostname) || url.port || url.username || url.password) throw new Error('Le lien doit provenir du site https://www.rtcquebec.ca.');
-  const match = url.pathname.match(/^\/horaires-et-trajets\/horaires-des-bus\/tous-les-parcours\/(\d{1,4})\/(\d{1,2})-[^/]+\/(\d{1,6})-[^/]+\/?$/);
+  const match = url.pathname.match(/^\/horaires-et-trajets\/horaires-des-bus\/tous-les-parcours\/(\d{1,4})\/(\d{1,2})-[^/]+\/(\d{1,6})-[^/]+(?:\/\d{4}-\d{2}-\d{2})?\/?$/);
   if (!match) throw new Error('Ce lien ne désigne pas un arrêt. Ouvrez un parcours, puis un arrêt sur le site du RTC.');
   return {route: match[1], direction: match[2], stop: match[3]};
 }

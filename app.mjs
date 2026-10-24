@@ -1,4 +1,4 @@
-import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse, readFavorites, countdown} from './core.mjs';
+import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse, readFavorites, countdown} from './core.mjs?v=2';
 const $ = selector => document.querySelector(selector);
 const timeFormat = new Intl.DateTimeFormat('fr-CA', {timeZone: 'America/Toronto', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'});
 const cache = new Map();
