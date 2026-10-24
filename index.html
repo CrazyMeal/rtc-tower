@@ -6,16 +6,15 @@
   <meta name="theme-color" content="#152b2a">
   <meta name="description" content="Vos arrêts RTC et les prochains passages, au même endroit.">
   <title>Mes passages · RTC Tower</title>
-  <link rel="stylesheet" href="styles.css?v=5">
-  <script type="module" src="app.mjs?v=5"></script>
+  <link rel="stylesheet" href="styles.css?v=6">
+  <script type="module" src="app.mjs?v=6"></script>
 </head>
 <body>
   <header class="masthead"><a class="brand" href="./" aria-label="RTC Tower, accueil"><span class="brand-mark" aria-hidden="true"><svg class="out-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span> rtc tower<span class="brand-dot">.</span></a><span class="city">QUÉBEC</span></header>
   <main>
     <div class="workspace">
       <section class="favorites-section" aria-labelledby="favorites-title">
-        <div class="section-heading"><h1 id="favorites-title">Mes arrêts <span id="count" class="count">0</span></h1><button id="refresh" class="text-button" type="button"><span aria-hidden="true">↻</span> Actualiser</button></div>
-        <p id="refresh-status" class="sr-only">Actualisation automatique.</p>
+        <div class="section-heading"><h1 id="favorites-title">Mes arrêts <span id="count" class="count">0</span></h1><div class="refresh-group"><span id="refresh-status" class="refresh-status" role="status"></span><button id="refresh" class="text-button" type="button"><span aria-hidden="true">↻</span> Actualiser</button></div></div>
         <p id="storage-warning" class="notice" role="alert" hidden></p>
         <div id="favorites"></div>
         <div id="empty" class="empty" hidden><h3>Aucun arrêt</h3><button id="first-add" class="text-button" type="button">Ajouter un arrêt →</button></div>

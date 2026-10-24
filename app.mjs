@@ -4,6 +4,7 @@ const timeFormat = new Intl.DateTimeFormat('fr-CA', {timeZone: 'America/Toronto'
 const cache = new Map();
 let favorites = [], savingAllowed = true, refreshing = false, lastRefresh = 0, renaming = null;
 const expanded = new Set();
+let openMenu = null;
 function storageWarning(message) { $('#storage-warning').textContent = message; $('#storage-warning').hidden = false; }
 try { favorites = readFavorites(localStorage.getItem(STORAGE_KEY)); }
 catch { savingAllowed = false; storageWarning('Vos favoris enregistrés ne sont pas accessibles ou sont invalides. Ils sont conservés tels quels ; les changements de cette session ne seront pas sauvegardés.'); }
@@ -25,13 +26,13 @@ async function request(favorite) {
   try { data = await response.json(); } catch { throw new Error('La réponse du RTC est illisible. Réessayez plus tard.'); }
   return validateResponse(data, favorite);
 }
-function sourceLink(f) {
-  const group = cache.get(favoriteKey(f))?.groups?.find(g => String(g.parcours.noParcours) === f.route && String(g.parcours.codeDirection) === f.direction);
+function sourceLink(f, group) {
   const slug = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 -]/g, '').trim().replace(/ +/g, '-');
-  return `https://www.rtcquebec.ca/horaires-et-trajets/horaires-des-bus/tous-les-parcours/${f.route}/${f.direction}-${slug(group?.parcours.descriptionDirection || 'direction')}/${f.stop}-${slug(group?.arret.nom || f.name)}`;
+  const route = group?.parcours.noParcours ?? f.route, direction = group?.parcours.codeDirection ?? f.direction;
+  return `https://www.rtcquebec.ca/horaires-et-trajets/horaires-des-bus/tous-les-parcours/${route}/${direction}-${slug(group?.parcours.descriptionDirection || 'direction')}/${f.stop}-${slug(group?.arret.nom || f.name)}`;
 }
 function rename(f) { renaming = favoriteKey(f); $('#rename-input').value = f.label; $('#rename-dialog').showModal(); $('#rename-input').focus(); }
-function move(index, offset) { [favorites[index], favorites[index + offset]] = [favorites[index + offset], favorites[index]]; save(); render(); const card = document.querySelectorAll('.stop-card')[index + offset]; card?.querySelector(offset < 0 ? '[data-up]' : '[data-down]')?.focus(); }
+function move(index, offset) { [favorites[index], favorites[index + offset]] = [favorites[index + offset], favorites[index]]; save(); render(); document.querySelector(`.tile[data-favorite="${favoriteKey(favorites[index + offset])}"] summary`)?.focus(); }
 function departureBox(h, state, stale, kind) {
   const remaining = countdown(h), live = h.ntr && !h.annule && !state.error && !stale;
   const box = el('div', `${kind}${h.annule ? ' cancelled' : ''}`), eta = el('div', `eta${remaining === 'Imminent' ? ' imminent' : ''}`), value = el('span', 'eta-value', remaining);
@@ -41,48 +42,54 @@ function departureBox(h, state, stale, kind) {
   const meta = el('div', live ? 'departure-meta sr-only' : 'departure-meta'); meta.append(document.createTextNode(h.annule ? 'Annulé' : state.error || stale ? 'À confirmer' : h.ntr ? 'Temps réel' : 'Planifié'));
   box.append(eta, el('div', 'clock-time', timeFormat.format(new Date(h.depart))), meta); return box;
 }
+const arrow = () => { const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('class', 'direction-arrow'); svg.setAttribute('aria-hidden', 'true'); svg.setAttribute('fill', 'none'); svg.setAttribute('stroke', 'currentColor'); svg.setAttribute('stroke-width', '2.4'); const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', 'M4 12h15M13 6l6 6-6 6'); svg.append(path); return svg; };
+function menu(f, index, menuKey) {
+  const name = `${f.label || f.name}${f.mode === 'all' ? ' (tous les parcours)' : ''}`, details = el('details', 'tile-menu'), summary = el('summary', '', '⋯'), items = el('div', 'menu-items');
+  summary.setAttribute('aria-label', `Options pour ${name}`); details.open = openMenu === menuKey;
+  details.addEventListener('toggle', () => { if (details.open) openMenu = menuKey; else if (openMenu === menuKey) openMenu = null; });
+  const item = (text, label, callback, disabled = false) => { const b = el('button', 'menu-item', text); b.type = 'button'; b.disabled = disabled; b.setAttribute('aria-label', `${label} ${name}`); b.addEventListener('click', callback); return b; };
+  const key = favoriteKey(f);
+  items.append(item('Monter', 'Monter', () => { openMenu = null; move(index, -1); }, index === 0), item('Descendre', 'Descendre', () => { openMenu = null; move(index, 1); }, index === favorites.length - 1), item('Renommer', 'Renommer', () => { openMenu = null; rename(f); }), item('Supprimer', 'Supprimer', () => { openMenu = null; favorites = favorites.filter(x => favoriteKey(x) !== key); cache.delete(key); save(); render(); $('#refresh').focus(); }));
+  details.append(summary, items); return details;
+}
+function tile(f, index, group, state, stale) {
+  const key = favoriteKey(f), type = serviceType(group?.parcours.codeTypeService), card = el('article', 'tile');
+  card.dataset.favorite = key;
+  const menuKey = group ? `${key}:${group.parcours.noParcours}:${group.parcours.codeDirection}` : key;
+  const badge = el('span', `route-badge ${group ? type.className : 'is-unknown'}`, group ? group.parcours.noParcours : f.mode === 'all' ? '···' : f.route); if (group) badge.title = type.name;
+  const destination = group?.parcours.descriptionDirection || (group ? 'Destination non précisée' : '');
+  const direction = el('div', 'direction'); if (group) { direction.append(arrow(), el('span', '', destination)); direction.title = destination; direction.setAttribute('aria-label', `Direction ${group.parcours.descriptionDirection || 'non précisée'}`); }
+  const stop = el('div', 'stop-line'), link = el('a', '', `${f.label || String(group?.arret.nom || f.name).replace(/\s*\/?\s*\d{4,}$/, '')} · ${f.stop}`); link.href = sourceLink(f, group); link.target = '_blank'; link.rel = 'noopener noreferrer'; link.title = 'Voir sur le site du RTC'; stop.append(link);
+  card.append(badge, direction, stop, menu(f, index, menuKey));
+  if (!group) { card.append(el('p', 'route-message', state?.error || 'Recherche des prochains passages…')); return card; }
+  if (state.error || stale) card.append(el('p', 'tile-note', `${state.error || 'Les données ne sont plus à jour.'} Derniers passages à confirmer.`));
+  const departures = group.horaires.filter(h => countdown(h) !== null).slice(0, 3);
+  if (group.arretNonDesservi || group.descenteSeulement) card.append(el('p', 'route-message', group.arretNonDesservi ? 'Arrêt non desservi actuellement.' : 'Descente seulement à cet arrêt.'));
+  else if (!departures.length) card.append(el('p', 'route-message', 'Aucun prochain passage annoncé.'));
+  else {
+    const [next, ...later] = departures; card.append(departureBox(next, state, stale, 'departure'));
+    if (later.length) {
+      const open = expanded.has(menuKey), list = el('div', 'later-departures'); list.id = `later-${index}-${group.parcours.noParcours}-${group.parcours.codeDirection}`; list.hidden = !open;
+      for (const h of later) list.append(departureBox(h, state, stale, 'later'));
+      const more = el('button', 'more-button', open ? '−' : `+${later.length}`); more.type = 'button'; more.setAttribute('aria-expanded', String(open)); more.setAttribute('aria-controls', list.id); more.title = open ? 'Masquer les passages suivants' : 'Voir les passages suivants'; more.setAttribute('aria-label', more.title);
+      more.addEventListener('click', () => { if (expanded.has(menuKey)) expanded.delete(menuKey); else expanded.add(menuKey); render(); document.getElementById(list.id)?.parentElement.querySelector('.more-button')?.focus(); });
+      card.append(more, list);
+    }
+  }
+  return card;
+}
 function render() {
   const list = $('#favorites'); list.replaceChildren(); $('#count').textContent = favorites.length; $('#empty').hidden = favorites.length > 0;
   favorites.forEach((f, index) => {
-    const key = favoriteKey(f), state = cache.get(key), card = el('article', 'stop-card');
-    const heading = el('div', 'stop-heading'), title = el('div'), controls = el('div', 'card-actions');
-    title.append(el('h3', '', f.label || f.name), el('p', 'stop-subtitle', `Arrêt ${f.stop}${f.mode === 'all' ? ' · tous les parcours' : ''}${f.label ? ` · ${f.name}` : ''}`));
-    const up = action('↑', `Monter ${f.label || f.name}`, () => move(index, -1), index === 0); up.dataset.up = '';
-    const down = action('↓', `Descendre ${f.label || f.name}`, () => move(index, 1), index === favorites.length - 1); down.dataset.down = '';
-    controls.append(up, down, action('✎', `Renommer ${f.label || f.name}`, () => rename(f)), action('×', `Supprimer ${f.label || f.name}`, () => { favorites = favorites.filter(item => favoriteKey(item) !== key); cache.delete(key); save(); render(); $('#refresh').focus(); }));
-    heading.append(title, controls); card.append(heading);
-    const stale = state?.updated && Date.now() - state.updated > 90000;
-    if (state?.error || stale) { const error = el('p', 'error-note', `${state?.error || 'Les données ne sont plus à jour.'}${state?.groups ? ' Derniers passages reçus ci-dessous, à confirmer.' : ''}`); card.append(error); }
-    if (state?.groups) {
-      for (const group of state.groups) {
-        const route = el('section', 'route'), type = serviceType(group.parcours.codeTypeService);
-        const badge = el('span', `route-badge ${type.className}`, group.parcours.noParcours); badge.title = type.name;
-        const direction = el('div', 'direction', group.parcours.descriptionDirection || 'Destination non précisée'); direction.setAttribute('aria-label', `Direction ${group.parcours.descriptionDirection || 'non précisée'}`);
-        route.append(badge, direction);
-        const departures = group.horaires.filter(h => countdown(h) !== null).slice(0, 3);
-        if (group.arretNonDesservi || group.descenteSeulement) route.append(el('p', 'route-message', group.arretNonDesservi ? 'Arrêt non desservi actuellement.' : 'Descente seulement à cet arrêt.'));
-        else if (!departures.length) route.append(el('p', 'route-message', 'Aucun prochain passage annoncé.'));
-        else {
-          const routeKey = `${key}:${group.parcours.noParcours}:${group.parcours.codeDirection}`, [next, ...later] = departures;
-          route.append(departureBox(next, state, stale, 'departure'));
-          if (later.length) {
-            const open = expanded.has(routeKey), list = el('div', 'later-departures'); list.id = `later-${index}-${group.parcours.noParcours}-${group.parcours.codeDirection}`; list.hidden = !open;
-            for (const h of later) list.append(departureBox(h, state, stale, 'later'));
-            const more = el('button', 'more-button', open ? '−' : `+${later.length}`); more.type = 'button'; more.setAttribute('aria-expanded', String(open)); more.setAttribute('aria-controls', list.id); more.title = open ? 'Masquer les passages suivants' : 'Voir les passages suivants'; more.setAttribute('aria-label', more.title);
-            more.addEventListener('click', () => { if (expanded.has(routeKey)) expanded.delete(routeKey); else expanded.add(routeKey); render(); document.getElementById(list.id)?.parentElement.querySelector('.more-button')?.focus(); });
-            route.append(more, list);
-          }
-        }
-        card.append(route);
-      }
-    } else if (!state?.error) card.append(el('p', 'loading', 'Recherche des prochains passages…'));
-    const footer = el('div', 'card-footer'); footer.append(el('span', '', state?.updated ? `Reçu à ${timeFormat.format(new Date(state.updated))}${stale || state.error ? ' · à confirmer' : ''}` : 'Source : RTC'));
-    const link = el('a', '', 'Voir sur le RTC'); link.href = sourceLink(f); link.target = '_blank'; link.rel = 'noopener noreferrer'; footer.append(link); card.append(footer); list.append(card);
+    const state = cache.get(favoriteKey(f)), stale = state?.updated && Date.now() - state.updated > 90000;
+    if (state?.groups) for (const group of state.groups) list.append(tile(f, index, group, state, stale));
+    else list.append(tile(f, index, null, state, stale));
   });
+  updateRefreshStatus();
 }
 async function refresh() {
   if (refreshing || document.hidden) return;
-  refreshing = true; $('#refresh').disabled = true; $('#refresh-status').textContent = 'Actualisation…';
+  refreshing = true; $('#refresh').disabled = true; updateRefreshStatus();
   try {
     await Promise.all(favorites.map(async f => {
       const key = favoriteKey(f);
@@ -97,8 +104,8 @@ async function refresh() {
   } finally { refreshing = false; $('#refresh').disabled = false; updateRefreshStatus(); }
 }
 function updateRefreshStatus() {
-  if (refreshing) return;
-  $('#refresh-status').textContent = document.hidden ? 'Actualisation en pause.' : 'Actualisation automatique.';
+  const received = lastRefresh ? `Reçu à ${timeFormat.format(new Date(lastRefresh))}${[...cache.values()].some(state => state.error) ? ' · à confirmer' : ''}` : '';
+  $('#refresh-status').textContent = refreshing ? 'Actualisation…' : document.hidden ? 'Actualisation en pause.' : received;
 }
 $('#add-form').addEventListener('submit', async event => {
   event.preventDefault(); const status = $('#form-status'), submit = $('#add-submit'); status.classList.remove('error'); status.textContent = '';
@@ -115,6 +122,8 @@ $('#add-form').addEventListener('submit', async event => {
   finally { submit.disabled = false; }
 });
 $('#refresh').addEventListener('click', refresh);
+document.addEventListener('click', event => { if (openMenu && !event.target.closest('.tile-menu')) { openMenu = null; document.querySelectorAll('.tile-menu[open]').forEach(d => { d.open = false; }); } });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && openMenu) { const d = document.querySelector('.tile-menu[open]'); openMenu = null; document.querySelectorAll('.tile-menu[open]').forEach(x => { x.open = false; }); d?.querySelector('summary').focus(); } });
 $('#first-add').addEventListener('click', () => $('#stop-url').focus());
 $('#rename-cancel').addEventListener('click', () => $('#rename-dialog').close());
 $('#rename-form').addEventListener('submit', event => { event.preventDefault(); const f = favorites.find(f => favoriteKey(f) === renaming); if (f) { f.label = $('#rename-input').value.trim(); save(); render(); } $('#rename-dialog').close(); });
