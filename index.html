@@ -6,38 +6,34 @@
   <meta name="theme-color" content="#152b2a">
   <meta name="description" content="Vos arrêts RTC et les prochains passages, au même endroit.">
   <title>Mes passages · RTC Tower</title>
-  <link rel="stylesheet" href="styles.css?v=3">
-  <script type="module" src="app.mjs?v=3"></script>
+  <link rel="stylesheet" href="styles.css?v=4">
+  <script type="module" src="app.mjs?v=4"></script>
 </head>
 <body>
-  <header class="masthead"><a class="brand" href="./" aria-label="RTC Tower, accueil"><span class="brand-mark" aria-hidden="true"><svg class="out-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span> rtc tower<span class="brand-dot">.</span></a><span class="city">QUÉBEC <span aria-hidden="true">/</span> VOTRE QUOTIDIEN</span></header>
+  <header class="masthead"><a class="brand" href="./" aria-label="RTC Tower, accueil"><span class="brand-mark" aria-hidden="true"><svg class="out-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span> rtc tower<span class="brand-dot">.</span></a><span class="city">QUÉBEC</span></header>
   <main>
-    <section class="intro" aria-labelledby="page-title">
-      <div><p class="eyebrow">UN PEU MOINS D’ATTENTE.</p><h1 id="page-title">Le prochain bus.<br><em>En un coup d’œil.</em></h1><p class="intro-copy">Vos arrêts, vos parcours. Juste ce qu’il faut pour partir au bon moment.</p></div>
-      <div class="clock-block"><span class="eyebrow">HEURE À QUÉBEC</span><time id="clock">--:--</time><span id="today"></span></div>
-    </section>
     <div class="workspace">
       <section class="favorites-section" aria-labelledby="favorites-title">
-        <div class="section-heading"><h2 id="favorites-title">Mes arrêts <span id="count" class="count">0</span></h2><button id="refresh" class="text-button" type="button"><span aria-hidden="true">↻</span> Actualiser</button></div>
-        <p id="refresh-status" class="small-note">Actualisation automatique toutes les 30 secondes.</p>
+        <div class="section-heading"><h1 id="favorites-title">Mes arrêts <span id="count" class="count">0</span></h1><button id="refresh" class="text-button" type="button"><span aria-hidden="true">↻</span> Actualiser</button></div>
+        <p id="refresh-status" class="sr-only">Actualisation automatique.</p>
         <p id="storage-warning" class="notice" role="alert" hidden></p>
         <div id="favorites"></div>
-        <div id="empty" class="empty" hidden><span aria-hidden="true"><svg class="out-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span><h3>Votre prochain départ commence ici.</h3><p>Ajoutez le lien d’un arrêt RTC pour retrouver ses passages à chaque visite.</p><button id="first-add" class="text-button" type="button">Ajouter mon premier arrêt →</button></div>
+        <div id="empty" class="empty" hidden><h3>Aucun arrêt</h3><button id="first-add" class="text-button" type="button">Ajouter un arrêt →</button></div>
       </section>
       <aside>
-        <section class="add-panel" aria-labelledby="add-title"><span class="panel-symbol" aria-hidden="true">+</span><p class="eyebrow">UN NOUVEL ARRÊT ?</p><h2 id="add-title">Ajoutez-le ici.</h2><p>Copiez le lien de votre arrêt depuis le site du RTC. On s’occupe du reste.</p>
+        <section class="add-panel" aria-labelledby="add-title"><span class="panel-symbol" aria-hidden="true">+</span><h2 id="add-title">Ajouter un arrêt</h2>
           <form id="add-form">
-            <label for="stop-url">Lien de l’arrêt RTC</label><input id="stop-url" name="url" type="url" placeholder="https://www.rtcquebec.ca/…" required autocomplete="off" aria-describedby="url-hint"><span id="url-hint" class="field-hint">Utilisez la page d’un arrêt dans les horaires d’un parcours.</span>
-            <label for="stop-mode">Passages à afficher</label><select id="stop-mode" name="mode"><option value="route">Le parcours du lien</option><option value="all">Tous les parcours de l’arrêt</option></select>
-            <label for="stop-label">Un nom pour vous <span class="optional">facultatif</span></label><input id="stop-label" name="label" maxlength="60" placeholder="Ex. Retour à la maison" autocomplete="off">
-            <button id="add-submit" class="primary-button" type="submit">Ajouter à mes arrêts <span aria-hidden="true"><svg class="out-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span></button><p id="form-status" role="status" class="form-status"></p>
+            <label for="stop-url">Lien de l’arrêt RTC</label><input id="stop-url" name="url" type="url" placeholder="https://www.rtcquebec.ca/…" required autocomplete="off" aria-describedby="url-hint"><span id="url-hint" class="field-hint">Copiez le lien de l’arrêt depuis le site du RTC.</span>
+            <label for="stop-mode">Parcours</label><select id="stop-mode" name="mode"><option value="route">Celui du lien</option><option value="all">Tous à cet arrêt</option></select>
+            <label for="stop-label">Nom personnalisé <span class="optional">facultatif</span></label><input id="stop-label" name="label" maxlength="60" placeholder="Ex. Retour à la maison" autocomplete="off">
+            <button id="add-submit" class="primary-button" type="submit">Ajouter <span aria-hidden="true"><svg class="out-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span></button><p id="form-status" role="status" class="form-status"></p>
           </form>
         </section>
-        <div class="legend"><p><img class="realtime-icon" src="realtime.svg" alt="" aria-hidden="true"><strong>Temps réel</strong> · prévision du RTC</p><p><strong>Planifié</strong> · horaire prévu</p><p class="privacy-note">Vos favoris restent dans ce navigateur.<br>Aucun compte nécessaire.</p></div>
+        <div class="legend"><p><img class="realtime-icon" src="realtime.svg" alt="" aria-hidden="true"> Temps réel · <span>Planifié : horaire prévu</span></p></div>
       </aside>
     </div>
   </main>
-  <footer><span>RTC TOWER <span aria-hidden="true"><svg class="out-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span></span><p>Un petit repère pour les trajets de tous les jours.</p><span>Projet personnel · Données du RTC</span></footer>
-  <dialog id="rename-dialog"><form id="rename-form"><h2>Renommer cet arrêt</h2><label for="rename-input">Votre nom personnalisé</label><input id="rename-input" maxlength="60" autocomplete="off"><p class="small-note">Laissez vide pour utiliser le nom du RTC.</p><div class="dialog-actions"><button type="button" id="rename-cancel" class="text-button">Annuler</button><button class="primary-button" type="submit">Enregistrer</button></div></form></dialog>
+  <footer><span>Données du RTC</span><span>Favoris enregistrés dans ce navigateur</span></footer>
+  <dialog id="rename-dialog"><form id="rename-form"><h2>Renommer cet arrêt</h2><label for="rename-input">Nom personnalisé</label><input id="rename-input" maxlength="60" autocomplete="off"><p class="small-note">Laissez vide pour utiliser le nom du RTC.</p><div class="dialog-actions"><button type="button" id="rename-cancel" class="text-button">Annuler</button><button class="primary-button" type="submit">Enregistrer</button></div></form></dialog>
 </body>
 </html>

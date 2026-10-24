@@ -36,7 +36,7 @@ function render() {
   favorites.forEach((f, index) => {
     const key = favoriteKey(f), state = cache.get(key), card = el('article', 'stop-card');
     const heading = el('div', 'stop-heading'), title = el('div'), controls = el('div', 'card-actions');
-    title.append(el('span', 'stop-number', `ARRÊT ${f.stop}${f.mode === 'all' ? ' · TOUS LES PARCOURS' : ''}`), el('h3', '', f.label || f.name), el('p', 'stop-subtitle', f.label ? f.name : state?.groups?.[0]?.arret.description || 'Votre arrêt RTC'));
+    title.append(el('span', 'stop-number', `ARRÊT ${f.stop}${f.mode === 'all' ? ' · TOUS LES PARCOURS' : ''}`), el('h3', '', f.label || f.name), el('p', 'stop-subtitle', f.label ? f.name : state?.groups?.[0]?.arret.description || ''));
     const up = action('↑', `Monter ${f.label || f.name}`, () => move(index, -1), index === 0); up.dataset.up = '';
     const down = action('↓', `Descendre ${f.label || f.name}`, () => move(index, 1), index === favorites.length - 1); down.dataset.down = '';
     controls.append(up, down, action('✎', `Renommer ${f.label || f.name}`, () => rename(f)), action('×', `Supprimer ${f.label || f.name}`, () => { favorites = favorites.filter(item => favoriteKey(item) !== key); cache.delete(key); save(); render(); $('#refresh').focus(); }));
@@ -46,7 +46,7 @@ function render() {
     if (state?.groups) {
       for (const group of state.groups) {
         const route = el('section', 'route'), routeHeading = el('div', 'route-heading');
-        const direction = el('div', 'direction'); direction.append(el('small', '', 'DIRECTION'), document.createTextNode(group.parcours.descriptionDirection || 'Destination non précisée'));
+        const direction = el('div', 'direction', group.parcours.descriptionDirection || 'Destination non précisée'); direction.setAttribute('aria-label', `Direction ${group.parcours.descriptionDirection || 'non précisée'}`);
         routeHeading.append(el('span', 'route-badge', group.parcours.noParcours), direction); route.append(routeHeading);
         const departures = group.horaires.filter(h => countdown(h) !== null).slice(0, 3);
         if (group.arretNonDesservi || group.descenteSeulement) route.append(el('p', 'route-message', group.arretNonDesservi ? 'Arrêt non desservi actuellement.' : 'Descente seulement à cet arrêt.'));
@@ -62,8 +62,8 @@ function render() {
             }
             eta.append(value);
             if (remaining !== 'Imminent') eta.append(el('span', 'unit', 'min'));
-            const meta = el('div', 'departure-meta'); meta.append(document.createTextNode(h.annule ? 'Annulé' : state.error || stale ? 'À confirmer' : h.ntr ? 'Temps réel' : 'Planifié'));
-            box.append(eta, meta, el('div', 'clock-time', timeFormat.format(new Date(h.depart)))); row.append(box);
+            const meta = el('div', h.ntr && !h.annule && !state.error && !stale ? 'departure-meta sr-only' : 'departure-meta'); meta.append(document.createTextNode(h.annule ? 'Annulé' : state.error || stale ? 'À confirmer' : h.ntr ? 'Temps réel' : 'Planifié'));
+            box.append(eta, el('div', 'clock-time', timeFormat.format(new Date(h.depart))), meta); row.append(box);
           }
           route.append(row);
         }
@@ -76,7 +76,7 @@ function render() {
 }
 async function refresh() {
   if (refreshing || document.hidden) return;
-  refreshing = true; $('#refresh').disabled = true; $('#refresh-status').textContent = 'Actualisation des passages…';
+  refreshing = true; $('#refresh').disabled = true; $('#refresh-status').textContent = 'Actualisation…';
   try {
     await Promise.all(favorites.map(async f => {
       const key = favoriteKey(f);
@@ -92,7 +92,7 @@ async function refresh() {
 }
 function updateRefreshStatus() {
   if (refreshing) return;
-  $('#refresh-status').textContent = document.hidden ? 'Actualisation en pause pendant votre absence.' : 'Actualisation toutes les 30 secondes · uniquement lorsque la page est visible.';
+  $('#refresh-status').textContent = document.hidden ? 'Actualisation en pause.' : 'Actualisation automatique.';
 }
 $('#add-form').addEventListener('submit', async event => {
   event.preventDefault(); const status = $('#form-status'), submit = $('#add-submit'); status.classList.remove('error'); status.textContent = '';
@@ -115,6 +115,5 @@ $('#rename-form').addEventListener('submit', event => { event.preventDefault(); 
 window.addEventListener('storage', event => { if (event.key === STORAGE_KEY || event.key === null) { try { favorites = event.newValue === null ? [] : readFavorites(event.newValue); render(); refresh(); } catch { storageWarning('Les favoris modifiés dans un autre onglet sont illisibles.'); } } });
 document.addEventListener('visibilitychange', () => { updateRefreshStatus(); if (!document.hidden) refresh(); });
 window.addEventListener('online', refresh);
-function updateClock() { const now = new Date(); $('#clock').textContent = timeFormat.format(now).replace(' h ', ':'); $('#clock').dateTime = now.toISOString(); $('#today').textContent = new Intl.DateTimeFormat('fr-CA', {timeZone: 'America/Toronto', weekday: 'long', day: 'numeric', month: 'long'}).format(now); }
-save(); updateClock(); render(); refresh();
-setInterval(() => { if (!document.hidden) { updateClock(); if (Date.now() - lastRefresh >= 30000) refresh(); } }, 1000);
+save(); render(); refresh();
+setInterval(() => { if (!document.hidden) { if (Date.now() - lastRefresh >= 30000) refresh(); } }, 1000);
