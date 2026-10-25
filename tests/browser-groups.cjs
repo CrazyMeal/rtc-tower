@@ -61,8 +61,8 @@ assert.match(await page.locator('.view-status').innerText(),/reprend|Automatique
 await page.getByRole('button',{name:'+ Groupe'}).click();
 await page.locator('#group-name').fill('Soir');
 {const loaded=page.locator('#member-list label',{hasText:'Galeries'});assert.equal(await loaded.locator('.route-badge').innerText(),'70');assert.ok((await loaded.innerText()).includes('→ Val-Bélair'));assert.equal(await loaded.locator('.route-badge.is-lebus').count(),1);
-// 5015 was never loaded since the reload: neutral badge, no direction.
-const row=page.locator('#member-list label',{hasText:'R.-Bourassa'});assert.equal(await row.locator('.route-badge.is-unknown').innerText(),'71');assert.equal(await row.locator('.member-dir').count(),0);await row.locator('input').check();}
+// 5015 was never loaded since the reload: colour from the route number, no direction.
+const row=page.locator('#member-list label',{hasText:'R.-Bourassa'});assert.equal(await row.locator('.route-badge.is-lebus').innerText(),'71');assert.equal(await row.locator('.member-dir').count(),0);await row.locator('input').check();}
 await page.locator('#group-form button[type=submit]').click();
 await tile('5015:71:0').waitFor();
 assert.equal(await pill('Soir').getAttribute('aria-pressed'),'true');

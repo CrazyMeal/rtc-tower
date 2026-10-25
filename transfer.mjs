@@ -1,5 +1,5 @@
-import {favoriteKey} from './core.mjs?v=16';
-import {parseState} from './store.mjs?v=16';
+import {favoriteKey} from './core.mjs?v=17';
+import {parseState} from './store.mjs?v=17';
 const LINK_VERSION = 1, MAX_LINK = 8000, MAX_PACKED = 65536, MAX_FILE = 100000, APP = 'rtc-tower';
 const bad = () => new Error('Ce lien de transfert est invalide ou incomplet.');
 function toBase64Url(bytes) {

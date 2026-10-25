@@ -46,4 +46,9 @@ const SERVICE_TYPES = {
   4: {name: 'Métrobus', className: 'is-metrobus'},
   6: {name: 'Couche-tard', className: 'is-couchetard'}
 };
+// The route number alone tells the kind of service (RTC series); the RTC answer, when there is one, overrides this.
+export function routeServiceCode(route) {
+  const n = /^\d{1,4}$/.test(String(route)) ? Number(route) : NaN;
+  return n >= 200 && n <= 699 ? 1 : n >= 800 && n <= 899 ? 4 : n >= 900 && n <= 999 ? 6 : 0;
+}
 export function serviceType(code) { return SERVICE_TYPES[code] || SERVICE_TYPES[0]; }

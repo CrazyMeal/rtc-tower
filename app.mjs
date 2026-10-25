@@ -1,11 +1,11 @@
-import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse, serviceType, stopTitle} from './core.mjs?v=16';
-import {VIEW_KEY, readState, serializeState, readView, removeFavorite, toggleMembership, upsertGroup, deleteGroup, moveFavorite} from './store.mjs?v=16';
-import {resolveView} from './schedule.mjs?v=16';
-import {timeFormat} from './dom.mjs?v=16';
-import {renderTile} from './tiles.mjs?v=16';
-import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=16';
-import {decodeLink} from './transfer.mjs?v=16';
-import {setupTransfer} from './transfer-ui.mjs?v=16';
+import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse, serviceType, routeServiceCode, stopTitle} from './core.mjs?v=17';
+import {VIEW_KEY, readState, serializeState, readView, removeFavorite, toggleMembership, upsertGroup, deleteGroup, moveFavorite} from './store.mjs?v=17';
+import {resolveView} from './schedule.mjs?v=17';
+import {timeFormat} from './dom.mjs?v=17';
+import {renderTile} from './tiles.mjs?v=17';
+import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=17';
+import {decodeLink} from './transfer.mjs?v=17';
+import {setupTransfer} from './transfer-ui.mjs?v=17';
 const $ = selector => document.querySelector(selector);
 const cache = new Map();
 // Data younger than this is reused when a change (not a poll) asks for a refresh, to avoid bursts on the RTC API.
@@ -38,11 +38,11 @@ async function request(favorite) {
   return validateResponse(data, favorite);
 }
 function rename(f) { renaming = favoriteKey(f); $('#rename-input').value = f.label; $('#rename-dialog').showModal(); $('#rename-input').focus(); }
-// What the group editor shows for a stop comes from the last RTC answer; a stop never loaded here stays neutral.
+// What the group editor shows for a stop comes from the last RTC answer; a stop never loaded here takes its colour from the route number.
 function describeFavorite(f) {
   const entry = cache.get(favoriteKey(f))?.entries?.[0];
   if (f.mode === 'all') return {title: stopTitle(f, entry), badge: '···', className: 'is-unknown', direction: 'Tous les parcours'};
-  return {title: stopTitle(f, entry), badge: f.route, className: entry ? serviceType(entry.parcours.codeTypeService).className : 'is-unknown', direction: entry?.parcours.descriptionDirection ? `→ ${entry.parcours.descriptionDirection}` : ''};
+  return {title: stopTitle(f, entry), badge: f.route, className: serviceType(entry ? entry.parcours.codeTypeService : routeServiceCode(f.route)).className, direction: entry?.parcours.descriptionDirection ? `→ ${entry.parcours.descriptionDirection}` : ''};
 }
 const editor = setupGroupEditor({
   describe: describeFavorite,

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {parseStopUrl, quebecDate, apiUrl, validateResponse, countdown, serviceType, EXAMPLE} from '../core.mjs';
+import {parseStopUrl, quebecDate, apiUrl, validateResponse, countdown, serviceType, routeServiceCode, EXAMPLE} from '../core.mjs';
 const url = 'https://www.rtcquebec.ca/horaires-et-trajets/horaires-des-bus/tous-les-parcours/70/1-val-belair/5419-galeries5419';
 test('extracts identifiers from the supplied RTC stop link', () => {
   assert.deepEqual(parseStopUrl(url + '?test=1#horaire'), {route:'70',direction:'1',stop:'5419'});
@@ -58,4 +58,13 @@ test('maps RTC service types to colour classes with leBus fallback', () => {
   assert.equal(serviceType(4).className, 'is-metrobus');
   assert.equal(serviceType(6).className, 'is-couchetard');
   assert.equal(serviceType(undefined).name, 'leBus');
+});
+test('the route number gives the kind of service when the RTC has not answered yet', () => {
+  const codes = routes => routes.map(routeServiceCode);
+  assert.deepEqual(codes(['1', '70', '185', '186', '199', '700', '799']), [0, 0, 0, 0, 0, 0, 0]);
+  assert.deepEqual(codes(['200', '584', '699']), [1, 1, 1]);
+  assert.deepEqual(codes(['800', '803', '899']), [4, 4, 4]);
+  assert.deepEqual(codes(['900', '910', '999']), [6, 6, 6]);
+  assert.deepEqual(codes(['', 'abc', '12345', undefined]), [0, 0, 0, 0]);
+  assert.equal(serviceType(routeServiceCode('584')).className, 'is-express');
 });
