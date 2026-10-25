@@ -6,6 +6,8 @@ import {renderTile} from './tiles.mjs?v=11';
 import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=11';
 const $ = selector => document.querySelector(selector);
 const cache = new Map();
+// Data younger than this is reused when a change (not a poll) asks for a refresh, to avoid bursts on the RTC API.
+const FRESH_MS = 25000, reuse = {queue: true, maxAge: FRESH_MS};
 let favorites = [], groups = [], manual = null, savingAllowed = true, refreshing = false, refreshQueued = false, lastRefresh = 0, renaming = null, viewSignature = '';
 function storageWarning(message) { $('#storage-warning').textContent = message; $('#storage-warning').hidden = false; }
 try { const state = readState(localStorage.getItem(STORAGE_KEY)); favorites = state.favorites; groups = state.groups; manual = readView(localStorage.getItem(VIEW_KEY)); }
@@ -23,7 +25,7 @@ const snapshot = () => ({favorites, groups});
 function commit(next) { favorites = next.favorites; groups = next.groups; save(); render(); }
 const currentView = () => resolveView(groups, manual, new Date());
 function visibleFavorites(view) { const group = groups.find(g => g.id === view.id); return view.id === 'all' ? favorites : favorites.filter(f => group?.favorites.includes(favoriteKey(f))); }
-function chooseView(view) { manual = view === null ? null : {view, setAt: Date.now()}; saveView(); render(); refresh(true); }
+function chooseView(view) { manual = view === null ? null : {view, setAt: Date.now()}; saveView(); render(); refresh(reuse); }
 async function request(favorite) {
   let response;
   try { response = await fetch(apiUrl(favorite), {signal: AbortSignal.timeout(12000), cache: 'no-store', credentials: 'omit'}); }
@@ -38,9 +40,9 @@ const editor = setupGroupEditor({
   onSave(group, existed) {
     const saved = {...group, id: group.id ?? `g-${Date.now().toString(36)}`};
     if (!existed) { manual = {view: saved.id, setAt: Date.now()}; saveView(); }
-    commit(upsertGroup(snapshot(), saved)); refresh(true);
+    commit(upsertGroup(snapshot(), saved)); refresh(reuse);
   },
-  onDelete(id) { if (manual?.view === id) { manual = null; saveView(); } commit(deleteGroup(snapshot(), id)); refresh(true); }
+  onDelete(id) { if (manual?.view === id) { manual = null; saveView(); } commit(deleteGroup(snapshot(), id)); refresh(reuse); }
 });
 const ui = {
   expanded: new Set(), menuKey: null,
@@ -50,7 +52,7 @@ const ui = {
     move(key, offset) { commit(moveFavorite(snapshot(), key, offset, visibleFavorites(currentView()).map(favoriteKey))); document.querySelector(`.tile[data-favorite="${key}"] summary`)?.focus(); },
     rename,
     remove(f) { const key = favoriteKey(f); cache.delete(key); commit(removeFavorite(snapshot(), key)); $('#refresh').focus(); },
-    toggleGroup(groupId, key) { commit(toggleMembership(snapshot(), groupId, key)); refresh(true); },
+    toggleGroup(groupId, key) { commit(toggleMembership(snapshot(), groupId, key)); refresh(reuse); },
     rerender: () => render()
   }
 };
@@ -69,12 +71,15 @@ function render() {
   });
   updateRefreshStatus();
 }
-async function refresh(queue = false) {
+// Only the favorites shown by the current view are requested, and only those without data, in error or older than maxAge.
+async function refresh({queue = false, maxAge = 0} = {}) {
   if (document.hidden) return;
-  if (refreshing) { if (queue === true) refreshQueued = true; return; }
+  if (refreshing) { if (queue) refreshQueued = true; return; }
+  const targets = visibleFavorites(currentView()).filter(f => { const cached = cache.get(favoriteKey(f)); return !cached?.updated || cached.error || Date.now() - cached.updated >= maxAge; });
+  if (!targets.length) return;
   refreshing = true; $('#refresh').disabled = true; updateRefreshStatus();
   try {
-    await Promise.all(visibleFavorites(currentView()).map(async f => {
+    await Promise.all(targets.map(async f => {
       const key = favoriteKey(f);
       try {
         const entries = await request(f);
@@ -84,7 +89,7 @@ async function refresh(queue = false) {
       } catch (error) { if (favorites.some(item => favoriteKey(item) === key)) cache.set(key, {...cache.get(key), error: error.message}); }
     }));
     lastRefresh = Date.now(); render();
-  } finally { refreshing = false; $('#refresh').disabled = false; updateRefreshStatus(); if (refreshQueued) { refreshQueued = false; refresh(); } }
+  } finally { refreshing = false; $('#refresh').disabled = false; updateRefreshStatus(); if (refreshQueued) { refreshQueued = false; refresh(reuse); } }
 }
 function updateRefreshStatus() {
   const failing = visibleFavorites(currentView()).some(f => cache.get(favoriteKey(f))?.error);
@@ -100,7 +105,7 @@ $('#add-form').addEventListener('submit', async event => {
     if (existing) {
       const group = shownGroup();
       if (!group || group.favorites.includes(key)) throw new Error('Cet arrêt avec cette sélection de parcours est déjà dans vos favoris.');
-      commit(toggleMembership(snapshot(), group.id, key)); refresh(true); $('#add-form').reset(); status.textContent = `${existing.label || existing.name} ajouté à ${group.name}.`; return;
+      commit(toggleMembership(snapshot(), group.id, key)); refresh(reuse); $('#add-form').reset(); status.textContent = `${existing.label || existing.name} ajouté à ${group.name}.`; return;
     }
     submit.disabled = true; status.textContent = 'Vérification de l’arrêt auprès du RTC…';
     const entries = await request(f); f.name = String(entries[0].arret.nom || `Arrêt ${f.stop}`);
@@ -124,14 +129,14 @@ window.addEventListener('storage', event => {
     try { const state = event.newValue === null ? {favorites: [], groups: []} : readState(event.newValue); favorites = state.favorites; groups = state.groups; }
     catch { storageWarning('Les favoris modifiés dans un autre onglet sont illisibles.'); return; }
   }
-  render(); refresh(true);
+  render(); refresh(reuse);
 });
-document.addEventListener('visibilitychange', () => { updateRefreshStatus(); if (!document.hidden) refresh(); });
+document.addEventListener('visibilitychange', () => { updateRefreshStatus(); if (!document.hidden) refresh({maxAge: FRESH_MS}); });
 window.addEventListener('online', () => refresh());
 save(); render(); refresh();
 setInterval(() => {
   if (document.hidden) return;
   const view = currentView();
-  if (`${view.id}:${view.mode}` !== viewSignature) { render(); refresh(true); }
+  if (`${view.id}:${view.mode}` !== viewSignature) { render(); refresh(reuse); }
   else if (Date.now() - lastRefresh >= 30000) refresh();
 }, 1000);

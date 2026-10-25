@@ -16,6 +16,8 @@ Servez le dossier par HTTP (les modules JavaScript ne se chargent pas correcteme
 
 Un groupe (Travail, Retour, Week-end…) choisit quels favoris afficher selon le jour et l’heure. Chaque groupe a des horaires « jours + dès HH:MM » : il reste affiché jusqu’à l’horaire suivant d’un groupe, même le lendemain. Les pastilles sous « Mes arrêts » permettent de changer de groupe à la main ; ce choix tient jusqu’au prochain horaire, puis l’affichage automatique reprend (« Revenir en auto » pour l’anticiper). Un favori peut appartenir à plusieurs groupes (menu ⋯ d’une tuile › Groupes) ; « Tous » montre toujours l’ensemble. Sans groupe, rien ne change.
 
+Seuls les arrêts affichés par la vue courante sont interrogés (toutes les 30 s, onglet visible) ; ceux des autres groupes ne le sont pas. Lors d’un changement de vue ou de groupe, les données de moins de 25 s sont réutilisées au lieu d’être redemandées.
+
 Organisation du code : `core.mjs` (RTC), `store.mjs` (favoris et groupes, format v2 migré depuis v1), `schedule.mjs` (résolution du groupe actif, heure de Québec), `tiles.mjs` et `groups-ui.mjs` (interface), `app.mjs` (orchestration). Les trois premiers sont purs et testés avec Node.
 
 Les favoris sont conservés dans le `localStorage` de cette origine et de ce navigateur. Aucun compte, synchronisation, import ou export dans cette version.
