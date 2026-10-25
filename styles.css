@@ -114,3 +114,7 @@
 .pill-icon{width:15px;height:15px;flex-shrink:0}
 .status-arrow{width:14px;height:14px;flex-shrink:0;margin-right:2px}
 .group-fieldset{min-width:0}.member{min-width:0}.member input{flex-shrink:0}
+.header-actions{display:flex;align-items:center;gap:8px}
+.install-action{min-height:38px;padding:7px 14px;font-size:13px}
+@media(min-width:741px){.install-action{display:none!important}}
+@media(max-width:420px){.masthead:has(.install-action:not([hidden])) #open-transfer span{display:none}.masthead:has(.install-action:not([hidden])) #open-transfer{padding:7px 10px}}

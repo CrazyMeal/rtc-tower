@@ -6,6 +6,7 @@ import {renderTile} from './tiles.mjs?v=18';
 import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=18';
 import {decodeLink} from './transfer.mjs?v=18';
 import {setupTransfer} from './transfer-ui.mjs?v=18';
+import {setupInstall} from './install-ui.mjs?v=18';
 const $ = selector => document.querySelector(selector);
 const cache = new Map();
 // Data younger than this is reused when a change (not a poll) asks for a refresh, to avoid bursts on the RTC API.
@@ -178,6 +179,7 @@ window.addEventListener('storage', event => {
 });
 document.addEventListener('visibilitychange', () => { updateRefreshStatus(); if (!document.hidden) refresh({maxAge: FRESH_MS}); });
 window.addEventListener('online', () => refresh());
+setupInstall();
 save(); render(); refresh(); handleImportLink();
 setInterval(() => {
   if (document.hidden) return;

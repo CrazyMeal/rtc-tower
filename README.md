@@ -18,7 +18,7 @@ Un groupe (Travail, Retour, Week-end…) choisit quels favoris afficher selon le
 
 Seuls les arrêts affichés par la vue courante sont interrogés (toutes les 30 s, onglet visible) ; ceux des autres groupes ne le sont pas. Lors d’un changement de vue ou de groupe, les données de moins de 25 s sont réutilisées au lieu d’être redemandées.
 
-Organisation du code : `core.mjs` (RTC), `store.mjs` (favoris et groupes, format v2 migré depuis v1), `schedule.mjs` (résolution du groupe actif, heure de Québec), `transfer.mjs` (export/import), `tiles.mjs`, `groups-ui.mjs` et `transfer-ui.mjs` (interface), `app.mjs` (orchestration). Les modules purs (`core`, `store`, `schedule`, `transfer`) sont testés avec Node.
+Organisation du code : `core.mjs` (RTC), `store.mjs` (favoris et groupes, format v2 migré depuis v1), `schedule.mjs` (résolution du groupe actif, heure de Québec), `transfer.mjs` (export/import), `tiles.mjs`, `groups-ui.mjs` et `transfer-ui.mjs` (interface), `install-ui.mjs` (bouton d’installation), `app.mjs` (orchestration). Les modules purs (`core`, `store`, `schedule`, `transfer`) sont testés avec Node.
 
 Les favoris sont conservés dans le `localStorage` de cette origine et de ce navigateur, avec la direction du parcours (`to`) apprise de la dernière réponse du RTC : elle survit donc à un rechargement et voyage avec les exports. Un favori enregistré avant cela, et jamais affiché depuis, est interrogé une seule fois à l’ouverture de l’éditeur de groupe. Aucun compte ni synchronisation automatique.
 
@@ -30,6 +30,10 @@ Les favoris sont conservés dans le `localStorage` de cette origine et de ce nav
 - **Fichier** : `rtc-tower-AAAA-MM-JJ.json`, lisible, qui sert aussi de sauvegarde. Importez-le depuis le même dialogue, ou collez un lien d’export dans le champ prévu.
 
 L’import **remplace** les arrêts et groupes de l’appareil, après une confirmation qui compare l’existant et l’importé ; il n’est jamais silencieux. Les données importées passent par la même validation que le stockage local (formats, doublons, limites de 60 arrêts et 12 groupes) et la taille décompressée est plafonnée. Le choix manuel de groupe n’est pas transféré. Un lien créé depuis un serveur local (`localhost`, réseau privé) ne s’ouvre pas sur un autre appareil : utilisez le fichier ou le site publié.
+
+## Installer sur Android
+
+Le site est une PWA (`manifest.webmanifest`, `sw.js`, icônes dans `icons/`). Sur mobile, un bouton « Installer » apparaît dans l’en-tête lorsque Chrome juge l’application installable (après une première interaction avec la page, en HTTPS ou sur `localhost`) ; il disparaît une fois l’application installée et n’existe jamais en mode application ni sur grand écran. Le menu ⋮ de Chrome › Installer l’application fonctionne aussi. L’application installée partage les favoris de Chrome.
 
 ## Vérifier
 
@@ -48,7 +52,7 @@ Le JavaScript du site RTC (`schedules.bundle.js`) utilise `https://api-iv.rtcque
 
 Requêtes vérifiées sans clé le 24 octobre 2026. Le serveur renvoyait `Access-Control-Allow-Origin: *`. La page interroge directement ce service toutes les 30 secondes lorsqu’elle est visible, avec un délai maximum de 12 secondes. `ntr` distingue temps réel et planifié ; `annule` indique une annulation. Les dates utilisent le fuseau `America/Toronto`. En cas d’erreur, les dernières données restent affichées avec une mention « à confirmer ». Aucun scraping du HTML n’est nécessaire au fonctionnement.
 
-Cette API utilisée par le site du RTC n’est pas établie comme une API publique officiellement prise en charge ; son contrat ou sa politique CORS peuvent changer. Les limites de jour de service autour de minuit restent à vérifier sur le réseau réel. Aucun service worker ne met en cache les réponses.
+Cette API utilisée par le site du RTC n’est pas établie comme une API publique officiellement prise en charge ; son contrat ou sa politique CORS peuvent changer. Les limites de jour de service autour de minuit restent à vérifier sur le réseau réel. Le service worker (`sw.js`) ne met en cache que les fichiers du site, réseau d’abord, pour pouvoir ouvrir l’application hors ligne ; les réponses du RTC ne sont jamais interceptées ni mises en cache.
 
 ## Périmètre V1
 
