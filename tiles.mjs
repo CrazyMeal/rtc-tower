@@ -1,5 +1,5 @@
-import {favoriteKey, countdown, serviceType} from './core.mjs?v=12';
-import {el, svg, timeFormat} from './dom.mjs?v=12';
+import {favoriteKey, countdown, serviceType} from './core.mjs?v=13';
+import {el, svg, timeFormat} from './dom.mjs?v=13';
 const realtimeIcon = (lost = false) => svg('0 0 20 20', `status-icon realtime-icon${lost ? ' is-lost' : ''}`, [['wave-inner', 'M2 8a10 10 0 0 1 10 10'], ['wave-outer', 'M2 2a16 16 0 0 1 16 16']]);
 const scheduledIcon = () => svg('0 0 20 20', 'status-icon scheduled-icon', [['', 'M4 5h12a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 16 17H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 5zM2.5 9h15M6.5 2.5v3M13.5 2.5v3']]);
 const arrow = () => svg('0 0 24 24', 'direction-arrow', [['', 'M4 12h15M13 6l6 6-6 6']], {fill: 'none', stroke: 'currentColor', 'stroke-width': '2.4'});

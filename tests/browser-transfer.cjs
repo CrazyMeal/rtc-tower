@@ -21,18 +21,18 @@ assert.match(download.suggestedFilename(),/^rtc-tower-\d{4}-\d{2}-\d{2}\.json$/)
 const B=await open();await B.page.goto('http://127.0.0.1:8080');await B.page.locator('.tile').first().waitFor();assert.equal(await B.page.locator('.tile').count(),1);
 await B.page.goto(link);await B.page.locator('#import-dialog[open]').waitFor();assert.ok((await B.page.locator('#import-summary').innerText()).includes('2 arrêts, 2 groupes (Travail, Retour)'));
 assert.equal(await B.page.evaluate(()=>location.hash),'','hash cleaned immediately');
-await B.page.locator('#import-cancel').click();assert.equal(await B.page.locator('.tile').count(),1);assert.equal(await B.page.locator('.view-pill').count(),0);
+await B.page.locator('#import-cancel').click();assert.equal(await B.page.locator('.tile').count(),1);assert.equal(await B.page.locator('.view-pill:not(.is-new)').count(),0);
 await B.page.goto(link);await B.page.locator('#import-dialog[open]').waitFor();await B.page.getByRole('button',{name:'Remplacer',exact:true}).click();
-await B.page.getByRole('button',{name:'Travail',exact:true}).waitFor();assert.equal(await B.page.locator('.view-pill').count(),3);assert.ok((await B.page.locator('.tile').first().innerText()).includes('Maison'));
+await B.page.getByRole('button',{name:'Travail',exact:true}).waitFor();assert.equal(await B.page.locator('.view-pill:not(.is-new)').count(),3);assert.ok((await B.page.locator('.tile').first().innerText()).includes('Maison'));
 await B.page.reload();await B.page.getByRole('button',{name:'Retour',exact:true}).waitFor();assert.equal(await B.page.locator('#import-dialog[open]').count(),0,'reload does not re-ask');
 // Tampered link: error notice, config untouched.
-await B.page.goto(link.slice(0,-12)+'AAAAAAAAAAAA');await B.page.locator('#transfer-notice').waitFor({state:'visible'});assert.ok((await B.page.locator('#transfer-notice').innerText()).includes('lien de transfert'));assert.equal(await B.page.locator('.view-pill').count(),3);
+await B.page.goto(link.slice(0,-12)+'AAAAAAAAAAAA');await B.page.locator('#transfer-notice').waitFor({state:'visible'});assert.ok((await B.page.locator('#transfer-notice').innerText()).includes('lien de transfert'));assert.equal(await B.page.locator('.view-pill:not(.is-new)').count(),3);
 // Pasted link in the dialog.
 const C=await open();await C.page.goto('http://127.0.0.1:8080');await C.page.locator('.tile').first().waitFor();await C.page.locator('#open-transfer').click();await C.page.locator('#transfer-paste').fill(link);await C.page.locator('#transfer-paste-go').click();await C.page.locator('#import-dialog[open]').waitFor();await C.page.getByRole('button',{name:'Remplacer',exact:true}).click();await C.page.getByRole('button',{name:'Travail',exact:true}).waitFor();
 // File import into a third device, plus a bad file.
 const D=await open();await D.page.goto('http://127.0.0.1:8080');await D.page.locator('.tile').first().waitFor();await D.page.locator('#open-transfer').click();
 require('node:fs').writeFileSync('/tmp/rtc-bad.json','{"hello":1}');await D.page.locator('#transfer-file').setInputFiles('/tmp/rtc-bad.json');await D.page.getByText('n’est pas un export RTC Tower',{exact:false}).waitFor();
-await D.page.locator('#transfer-file').setInputFiles(file);await D.page.locator('#import-dialog[open]').waitFor();await D.page.getByRole('button',{name:'Remplacer',exact:true}).click();await D.page.getByRole('button',{name:'Retour',exact:true}).waitFor();assert.equal(await D.page.locator('.view-pill').count(),3);
+await D.page.locator('#transfer-file').setInputFiles(file);await D.page.locator('#import-dialog[open]').waitFor();await D.page.getByRole('button',{name:'Remplacer',exact:true}).click();await D.page.getByRole('button',{name:'Retour',exact:true}).waitFor();assert.equal(await D.page.locator('.view-pill:not(.is-new)').count(),3);
 // Blocked storage then import recovers saving.
 const E=await open(`Storage.prototype.getItem=function(){throw new Error('blocked')}`);await E.page.goto('http://127.0.0.1:8080');await E.page.locator('#storage-warning').waitFor({state:'visible'});
 await E.page.goto(link);await E.page.locator('#import-dialog[open]').waitFor();await E.page.getByRole('button',{name:'Remplacer',exact:true}).click();await E.page.getByRole('button',{name:'Travail',exact:true}).waitFor();assert.equal(await E.page.locator('#storage-warning').isVisible(),false);

@@ -1,5 +1,5 @@
-import {el} from './dom.mjs?v=12';
-import {MAX_GROUPS} from './store.mjs?v=12';
+import {el} from './dom.mjs?v=13';
+import {MAX_GROUPS} from './store.mjs?v=13';
 const DAY_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const DAY_NAMES = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 const clock = at => at.replace(':', ' h ');
@@ -8,14 +8,14 @@ function button(className, text, callback) { const b = el('button', className, t
 // The view bar: one pill per group plus "Tous", and a line saying why this view is showing.
 export function renderViewBar(bar, {groups, resolved, onSelect, onAuto, onEdit, onNew}) {
   bar.replaceChildren();
-  if (!groups.length) { const create = button('text-button view-new', '+ Créer un groupe', onNew); create.title = 'Afficher des arrêts différents selon le jour et l’heure'; bar.append(create); return; }
+  if (!groups.length) { const create = button('view-pill is-new', '+ Créer un groupe', onNew); create.title = 'Afficher des arrêts différents selon le jour et l’heure'; bar.append(create); return; }
   const pills = el('div', 'view-pills'); pills.setAttribute('role', 'group'); pills.setAttribute('aria-label', 'Groupes d’arrêts');
   for (const [id, name] of [...groups.map(g => [g.id, g.name]), ['all', 'Tous']]) { const pill = button('view-pill', name, () => onSelect(id)); pill.setAttribute('aria-pressed', String(resolved.id === id)); pills.append(pill); }
   const status = el('p', 'view-status'), current = groups.find(g => g.id === resolved.id);
   if (resolved.mode === 'manual') status.append(`Choisi manuellement${resolved.until ? ` · retour automatique ${when(resolved.until)}` : ''} `, button('text-button', 'Revenir en auto', onAuto));
   else status.append(current ? `Automatique${resolved.until ? ` · jusqu’à ${when(resolved.until)}` : ''}` : 'Automatique · tous les arrêts');
   if (current) status.append(' ', button('text-button', 'Modifier', () => onEdit(current.id)));
-  bar.append(pills); if (groups.length < MAX_GROUPS) bar.append(button('text-button view-new', '+ Groupe', onNew)); bar.append(status);
+  bar.append(pills); if (groups.length < MAX_GROUPS) bar.append(button('view-pill is-new', '+ Groupe', onNew)); bar.append(status);
 }
 // Wires the static <dialog id="group-dialog"> once; open() fills it for a new or existing group.
 export function setupGroupEditor({onSave, onDelete}) {

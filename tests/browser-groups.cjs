@@ -25,7 +25,6 @@ await tile('5419:70:1').waitFor();
 assert.equal(await page.locator('.tile').count(),1);
 assert.equal(await pill('Travail').getAttribute('aria-pressed'),'true');
 assert.match(await page.locator('.view-status').innerText(),/Automatique · jusqu’à 13 h 00/);
-assert.equal(await page.locator('#count').innerText(),'1');
 // Only the shown stop is polled: 5015 belongs to another group and is never requested.
 assert.equal(calls['5015'],0);
 const first=calls['5419'];
@@ -79,7 +78,7 @@ await pill('Soir').click();await page.waitForFunction(()=>document.querySelector
 await page.getByRole('button',{name:'Modifier',exact:true}).click();
 await page.locator('#group-delete').click();
 await page.waitForFunction(()=>![...document.querySelectorAll('.view-pill')].some(p=>p.textContent==='Soir'));
-assert.equal(await page.locator('.view-pill').count(),3);
+assert.equal(await page.locator('.view-pill:not(.is-new)').count(),3);
 // Invalid group is refused with a message.
 await page.getByRole('button',{name:'+ Groupe'}).click();await page.locator('#group-form button[type=submit]').click();
 assert.match(await page.locator('#group-error').innerText(),/Donnez un nom/);await page.locator('#group-cancel').click();

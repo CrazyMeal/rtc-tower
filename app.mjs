@@ -1,11 +1,11 @@
-import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse} from './core.mjs?v=12';
-import {VIEW_KEY, readState, serializeState, readView, removeFavorite, toggleMembership, upsertGroup, deleteGroup, moveFavorite} from './store.mjs?v=12';
-import {resolveView} from './schedule.mjs?v=12';
-import {timeFormat} from './dom.mjs?v=12';
-import {renderTile} from './tiles.mjs?v=12';
-import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=12';
-import {decodeLink} from './transfer.mjs?v=12';
-import {setupTransfer} from './transfer-ui.mjs?v=12';
+import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse} from './core.mjs?v=13';
+import {VIEW_KEY, readState, serializeState, readView, removeFavorite, toggleMembership, upsertGroup, deleteGroup, moveFavorite} from './store.mjs?v=13';
+import {resolveView} from './schedule.mjs?v=13';
+import {timeFormat} from './dom.mjs?v=13';
+import {renderTile} from './tiles.mjs?v=13';
+import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=13';
+import {decodeLink} from './transfer.mjs?v=13';
+import {setupTransfer} from './transfer-ui.mjs?v=13';
 const $ = selector => document.querySelector(selector);
 const cache = new Map();
 // Data younger than this is reused when a change (not a poll) asks for a refresh, to avoid bursts on the RTC API.
@@ -76,7 +76,7 @@ function render() {
   const view = currentView(); viewSignature = `${view.id}:${view.mode}`;
   if (manual && view.mode === 'auto') { manual = null; saveView(); }
   const visible = visibleFavorites(view), list = $('#favorites'), group = groups.find(g => g.id === view.id);
-  list.replaceChildren(); $('#count').textContent = visible.length; $('#empty').hidden = favorites.length > 0;
+  list.replaceChildren(); $('#empty').hidden = favorites.length > 0;
   $('#group-empty').hidden = !favorites.length || visible.length > 0; $('#group-empty-name').textContent = group?.name ?? '';
   $('#view-bar').hidden = !favorites.length;
   renderViewBar($('#view-bar'), {groups, resolved: view, onSelect: id => { if (id !== view.id || view.mode === 'manual') chooseView(id); }, onAuto: () => chooseView(null), onEdit: id => editor.open(groups.find(g => g.id === id), favorites, favoriteKey), onNew: () => editor.open(null, favorites, favoriteKey)});

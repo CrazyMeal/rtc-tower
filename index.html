@@ -6,16 +6,16 @@
   <meta name="theme-color" content="#152b2a">
   <meta name="description" content="Vos arrêts RTC et les prochains passages, au même endroit.">
   <title>Mes passages · RTC Tower</title>
-  <link rel="stylesheet" href="styles.css?v=12">
-  <script type="module" src="app.mjs?v=12"></script>
+  <link rel="stylesheet" href="styles.css?v=13">
+  <script type="module" src="app.mjs?v=13"></script>
 </head>
 <body>
-  <header class="masthead"><a class="brand" href="./" aria-label="RTC Tower, accueil"><span class="brand-mark" aria-hidden="true"><svg class="out-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span> rtc tower<span class="brand-dot">.</span></a><span class="city">QUÉBEC</span></header>
+  <header class="masthead"><a class="brand" href="./" aria-label="RTC Tower, accueil"><span class="brand-mark" aria-hidden="true"><svg class="out-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span> rtc tower<span class="brand-dot">.</span></a><button id="open-transfer" class="secondary-button header-action" type="button" aria-label="Transférer mes arrêts vers un autre appareil"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4"/></svg><span>Transférer</span></button></header>
   <main>
     <div class="workspace">
       <section class="favorites-section" aria-labelledby="favorites-title">
-        <div class="section-heading"><h1 id="favorites-title">Mes arrêts <span id="count" class="count">0</span></h1><div class="refresh-group"><span id="refresh-status" class="refresh-status" role="status"></span><button id="refresh" class="text-button" type="button"><span aria-hidden="true">↻</span> Actualiser</button></div></div>
-        <div id="view-bar" class="view-bar"></div>
+        <h1 id="favorites-title" class="sr-only">Mes arrêts</h1>
+        <div class="section-heading"><div id="view-bar" class="view-bar"></div><div class="refresh-group"><span id="refresh-status" class="refresh-status" role="status"></span><button id="refresh" class="text-button" type="button"><span aria-hidden="true">↻</span> Actualiser</button></div></div>
         <p id="transfer-notice" class="notice" role="alert" hidden></p>
         <p id="storage-warning" class="notice" role="alert" hidden></p>
         <div id="favorites"></div>
@@ -31,27 +31,26 @@
             <button id="add-submit" class="primary-button" type="submit">Ajouter <span aria-hidden="true"><svg class="out-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span></button><p id="form-status" role="status" class="form-status"></p>
           </form>
         </section>
-        <button id="open-transfer" class="text-button transfer-open" type="button">⇄ Transférer mes arrêts</button>
         <div class="legend"><p><svg class="status-icon realtime-icon" viewBox="0 0 20 20" aria-hidden="true"><path class="wave-inner" d="M2 8a10 10 0 0 1 10 10"/><path class="wave-outer" d="M2 2a16 16 0 0 1 16 16"/></svg> Temps réel · <svg class="status-icon scheduled-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5h12a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 16 17H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 5zM2.5 9h15M6.5 2.5v3M13.5 2.5v3"/></svg> Planifié : horaire prévu</p><p><span class="dot" style="background:var(--lebus);margin-left:0"></span>leBus <span class="dot" style="background:var(--express)"></span>eXpress <span class="dot" style="background:var(--metrobus)"></span>Métrobus</p></div>
       </aside>
     </div>
   </main>
-  <footer><span>Données du RTC</span><span>Favoris enregistrés dans ce navigateur</span></footer>
   <dialog id="rename-dialog"><form id="rename-form"><h2>Renommer cet arrêt</h2><label for="rename-input">Nom personnalisé</label><input id="rename-input" maxlength="60" autocomplete="off"><p class="small-note">Laissez vide pour utiliser le nom du RTC.</p><div class="dialog-actions"><button type="button" id="rename-cancel" class="text-button">Annuler</button><button class="primary-button" type="submit">Enregistrer</button></div></form></dialog>
   <dialog id="group-dialog"><form id="group-form"><h2 id="group-title">Nouveau groupe</h2><label for="group-name">Nom</label><input id="group-name" maxlength="40" placeholder="Ex. Travail" autocomplete="off">
     <fieldset class="group-fieldset"><legend>Quand l’afficher</legend><p class="small-note">Un groupe reste affiché jusqu’à l’horaire suivant d’un groupe, même le lendemain.</p><div id="trigger-list"></div><p id="no-trigger" class="small-note" hidden>Sans horaire, ce groupe ne s’affiche que si vous le choisissez.</p><button type="button" id="add-trigger" class="text-button">+ Ajouter un horaire</button></fieldset>
     <fieldset class="group-fieldset"><legend>Arrêts du groupe</legend><div id="member-list"></div></fieldset>
     <p id="group-error" class="form-status error" role="alert"></p>
     <div class="dialog-actions"><button type="button" id="group-delete" class="text-button danger">Supprimer</button><button type="button" id="group-cancel" class="text-button">Annuler</button><button class="primary-button" type="submit">Enregistrer</button></div></form></dialog>
-  <dialog id="transfer-dialog"><div class="transfer"><h2>Transférer mes arrêts</h2>
-    <section aria-labelledby="export-title"><h3 id="export-title">Exporter</h3><p class="small-note">Ouvrez ce lien sur un autre appareil pour y retrouver vos arrêts et vos groupes.</p>
-      <input id="transfer-link" readonly aria-label="Lien d’export" autocomplete="off"><p id="transfer-local" class="small-note" hidden>Ce lien pointe vers un serveur local : il ne s’ouvrira pas sur un autre appareil. Utilisez plutôt le fichier, ou ouvrez le site publié.</p>
-      <div class="transfer-actions"><button type="button" id="transfer-copy" class="text-button">Copier le lien</button><button type="button" id="transfer-share" class="text-button" hidden>Partager…</button><button type="button" id="transfer-download" class="text-button">Télécharger le fichier</button></div></section>
-    <section aria-labelledby="import-title"><h3 id="import-title">Importer</h3>
-      <label for="transfer-file">Fichier d’export</label><input id="transfer-file" type="file" accept=".json,application/json">
-      <label for="transfer-paste">Ou coller un lien d’export</label><input id="transfer-paste" autocomplete="off" placeholder="https://…#import=1.…"><div class="transfer-actions"><button type="button" id="transfer-paste-go" class="text-button">Importer ce lien</button></div></section>
-    <p id="transfer-status" class="form-status" role="status"></p>
-    <div class="dialog-actions"><button type="button" id="transfer-close" class="text-button">Fermer</button></div></div></dialog>
-  <dialog id="import-dialog"><form id="import-form"><h2>Remplacer votre configuration ?</h2><p id="import-summary" class="small-note"></p><p class="small-note">Vos arrêts et groupes actuels seront remplacés sur cet appareil.</p><div class="dialog-actions"><button type="button" id="import-cancel" class="text-button">Annuler</button><button class="primary-button" type="submit">Remplacer</button></div></form></dialog>
+  <dialog id="transfer-dialog"><div class="transfer">
+    <div class="dialog-head"><h2>Transférer mes arrêts</h2><button type="button" id="transfer-close" class="close-button" aria-label="Fermer"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <section aria-labelledby="export-title"><h3 id="export-title">Exporter</h3><p class="small-note">Ouvrez ce lien sur votre téléphone ou un autre navigateur pour y retrouver vos arrêts et vos groupes.</p>
+      <div class="field-row"><input id="transfer-link" readonly aria-label="Lien d’export" autocomplete="off"><button type="button" id="transfer-copy" class="primary-button compact">Copier le lien</button></div>
+      <p id="transfer-local" class="small-note" hidden>Ce lien pointe vers un serveur local : il ne s’ouvrira pas sur un autre appareil. Utilisez plutôt le fichier, ou ouvrez le site publié.</p>
+      <div class="transfer-actions"><button type="button" id="transfer-share" class="secondary-button" hidden>Partager…</button><button type="button" id="transfer-download" class="secondary-button">Télécharger le fichier</button></div></section>
+    <section aria-labelledby="import-title"><h3 id="import-title">Importer</h3><p class="small-note">Depuis un fichier d’export ou un lien copié sur l’autre appareil.</p>
+      <div class="transfer-actions"><input id="transfer-file" class="file-input" type="file" accept=".json,application/json"><label for="transfer-file" class="secondary-button">Choisir un fichier…</label></div>
+      <div class="field-row"><input id="transfer-paste" aria-label="Lien d’export à coller" autocomplete="off" placeholder="Ou collez un lien d’export ici"><button type="button" id="transfer-paste-go" class="secondary-button">Importer le lien</button></div></section>
+    <p id="transfer-status" class="form-status" role="status"></p></div></dialog>
+  <dialog id="import-dialog"><form id="import-form"><h2>Remplacer votre configuration ?</h2><p id="import-summary" class="small-note"></p><p class="small-note">Vos arrêts et groupes actuels seront remplacés sur cet appareil.</p><div class="dialog-actions"><button type="button" id="import-cancel" class="secondary-button">Annuler</button><button class="primary-button" type="submit">Remplacer</button></div></form></dialog>
 </body>
 </html>
