@@ -60,3 +60,13 @@ test('rejects files that are not valid RTC Tower exports', () => {
   const ok = JSON.parse(exportFile(state()));
   for (const text of ['oops', 'null', '{"version":2,"favorites":[],"groups":[]}', JSON.stringify({...ok, version: 3}), JSON.stringify({...ok, favorites: [{...EXAMPLE, stop: '<b>'}]}), JSON.stringify({...ok, favorites: [EXAMPLE, EXAMPLE]}), 'x'.repeat(100001)]) assert.throws(() => importFile(text), undefined, text.slice(0, 60));
 });
+test('the destination travels with the link, and links without it still decode', async () => {
+  const withTo = {favorites: [{...EXAMPLE, to: 'Val-Bélair'}, {...other}], groups: []};
+  const decoded = await decodeLink(await encodeLink(withTo, BASE));
+  assert.deepEqual(decoded.favorites.map(f => f.to), ['Val-Bélair', undefined]);
+  const old = pack({favorites: [EXAMPLE], groups: []});
+  assert.equal(old[1][0].length, 6);
+  assert.equal((await decodeLink(await forge(new TextEncoder().encode(JSON.stringify(old))))).favorites[0].to, undefined);
+  const long = pack(withTo); long[1][0][6] = 'x'.repeat(81);
+  await assert.rejects(async () => decodeLink(await forge(new TextEncoder().encode(JSON.stringify(long)))), /lien de transfert/);
+});

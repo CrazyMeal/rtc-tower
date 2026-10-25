@@ -1,11 +1,11 @@
-import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse, serviceType, routeServiceCode, stopTitle} from './core.mjs?v=17';
-import {VIEW_KEY, readState, serializeState, readView, removeFavorite, toggleMembership, upsertGroup, deleteGroup, moveFavorite} from './store.mjs?v=17';
-import {resolveView} from './schedule.mjs?v=17';
-import {timeFormat} from './dom.mjs?v=17';
-import {renderTile} from './tiles.mjs?v=17';
-import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=17';
-import {decodeLink} from './transfer.mjs?v=17';
-import {setupTransfer} from './transfer-ui.mjs?v=17';
+import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse, serviceType, routeServiceCode, stopTitle} from './core.mjs?v=18';
+import {VIEW_KEY, readState, serializeState, readView, removeFavorite, toggleMembership, upsertGroup, deleteGroup, moveFavorite} from './store.mjs?v=18';
+import {resolveView} from './schedule.mjs?v=18';
+import {timeFormat} from './dom.mjs?v=18';
+import {renderTile} from './tiles.mjs?v=18';
+import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=18';
+import {decodeLink} from './transfer.mjs?v=18';
+import {setupTransfer} from './transfer-ui.mjs?v=18';
 const $ = selector => document.querySelector(selector);
 const cache = new Map();
 // Data younger than this is reused when a change (not a poll) asks for a refresh, to avoid bursts on the RTC API.
@@ -42,8 +42,28 @@ function rename(f) { renaming = favoriteKey(f); $('#rename-input').value = f.lab
 function describeFavorite(f) {
   const entry = cache.get(favoriteKey(f))?.entries?.[0];
   if (f.mode === 'all') return {title: stopTitle(f, entry), badge: '···', className: 'is-unknown', direction: 'Tous les parcours'};
-  return {title: stopTitle(f, entry), badge: f.route, className: serviceType(entry ? entry.parcours.codeTypeService : routeServiceCode(f.route)).className, direction: entry?.parcours.descriptionDirection ? `→ ${entry.parcours.descriptionDirection}` : ''};
+  const to = entry?.parcours.descriptionDirection || f.to;
+  return {title: stopTitle(f, entry), badge: f.route, className: serviceType(entry ? entry.parcours.codeTypeService : routeServiceCode(f.route)).className, direction: to ? `→ ${to}` : ''};
 }
+// What an RTC answer teaches about a favorite is kept with it, so it survives a reload; returns whether anything changed.
+function learn(f, entries) {
+  const name = String(entries[0].arret.nom || `Arrêt ${f.stop}`), to = f.mode === 'route' ? String(entries[0].parcours.descriptionDirection || '').slice(0, 80) : '';
+  const changed = f.name !== name || (f.to ?? '') !== to;
+  f.name = name; if (to) f.to = to; else delete f.to;
+  return changed;
+}
+// Favorites saved before directions were kept, and never shown since, are asked about once when a group is edited.
+async function hydrateDirections() {
+  const targets = favorites.filter(f => f.mode === 'route' && !f.to && !cache.get(favoriteKey(f))?.entries);
+  if (!targets.length) return;
+  let changed = false;
+  await Promise.all(targets.map(async f => {
+    try { const entries = await request(f); if (!favorites.includes(f)) return; cache.set(favoriteKey(f), {entries, updated: Date.now(), error: null}); changed = learn(f, entries) || changed; }
+    catch { /* the line simply stays without a direction until the next time */ }
+  }));
+  if (changed) save();
+}
+function openEditor(group) { editor.open(group, favorites, favoriteKey); hydrateDirections().then(() => editor.refreshMembers()); }
 const editor = setupGroupEditor({
   describe: describeFavorite,
   onSave(group, existed) {
@@ -86,7 +106,7 @@ function render() {
   list.replaceChildren(); $('#empty').hidden = favorites.length > 0;
   $('#group-empty').hidden = !favorites.length || visible.length > 0; $('#group-empty-name').textContent = group?.name ?? '';
   $('#view-bar').hidden = !favorites.length;
-  renderViewBar($('#view-bar'), {groups, resolved: view, onSelect: id => { if (id !== view.id || view.mode === 'manual') chooseView(id); }, onAuto: () => chooseView(null), onEdit: id => editor.open(groups.find(g => g.id === id), favorites, favoriteKey), onNew: () => editor.open(null, favorites, favoriteKey)});
+  renderViewBar($('#view-bar'), {groups, resolved: view, onSelect: id => { if (id !== view.id || view.mode === 'manual') chooseView(id); }, onAuto: () => chooseView(null), onEdit: id => openEditor(groups.find(g => g.id === id)), onNew: () => openEditor(null)});
   visible.forEach((f, position) => {
     const state = cache.get(favoriteKey(f)), stale = state?.updated && Date.now() - state.updated > 90000;
     if (state?.entries) for (const entry of state.entries) list.append(renderTile(f, position, visible.length, entry, state, stale, ui));
@@ -101,6 +121,7 @@ async function refresh({queue = false, maxAge = 0} = {}) {
   const targets = visibleFavorites(currentView()).filter(f => { const cached = cache.get(favoriteKey(f)); return !cached?.updated || cached.error || Date.now() - cached.updated >= maxAge; });
   if (!targets.length) return;
   refreshing = true; $('#refresh').disabled = true; updateRefreshStatus();
+  let changed = false;
   try {
     await Promise.all(targets.map(async f => {
       const key = favoriteKey(f);
@@ -108,9 +129,10 @@ async function refresh({queue = false, maxAge = 0} = {}) {
         const entries = await request(f);
         if (!favorites.some(item => favoriteKey(item) === key)) return;
         cache.set(key, {entries, updated: Date.now(), error: null});
-        f.name = String(entries[0].arret.nom || `Arrêt ${f.stop}`);
+        changed = learn(f, entries) || changed;
       } catch (error) { if (favorites.some(item => favoriteKey(item) === key)) cache.set(key, {...cache.get(key), error: error.message}); }
     }));
+    if (changed) save();
     lastRefresh = Date.now(); render();
   } finally { refreshing = false; $('#refresh').disabled = false; updateRefreshStatus(); if (refreshQueued) { refreshQueued = false; refresh(reuse); } }
 }
@@ -131,7 +153,7 @@ $('#add-form').addEventListener('submit', async event => {
       commit(toggleMembership(snapshot(), group.id, key)); refresh(reuse); $('#add-form').reset(); status.textContent = `${existing.label || existing.name} ajouté à ${group.name}.`; return;
     }
     submit.disabled = true; status.textContent = 'Vérification de l’arrêt auprès du RTC…';
-    const entries = await request(f); f.name = String(entries[0].arret.nom || `Arrêt ${f.stop}`);
+    const entries = await request(f); learn(f, entries);
     // Recheck after the asynchronous request, in case another tab added this stop.
     if (favorites.some(item => favoriteKey(item) === key)) throw new Error('Ce favori existe déjà.');
     const group = shownGroup(), next = {favorites: [...favorites, f], groups};

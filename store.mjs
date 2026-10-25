@@ -1,17 +1,18 @@
-import {EXAMPLE, favoriteKey} from './core.mjs?v=17';
+import {EXAMPLE, favoriteKey} from './core.mjs?v=18';
 export const VIEW_KEY = 'rtc-tower.view.v1';
 export const MAX_GROUPS = 12;
 export const MAX_FAVORITES = 60;
+const MAX_TO = 80; // destination of the route, learned from the RTC answer
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 function parseFavorites(list) {
   if (list.length > MAX_FAVORITES) throw new Error('Trop de favoris.');
   const unique = new Set();
   return list.map(f => {
-    if (!f || !/^\d{1,6}$/.test(f.stop) || !/^\d{1,4}$/.test(f.route) || !/^\d{1,2}$/.test(f.direction) || !['route', 'all'].includes(f.mode) || typeof f.label !== 'string' || f.label.length > 60 || typeof f.name !== 'string') throw new Error('Favoris enregistrés invalides.');
+    if (!f || !/^\d{1,6}$/.test(f.stop) || !/^\d{1,4}$/.test(f.route) || !/^\d{1,2}$/.test(f.direction) || !['route', 'all'].includes(f.mode) || typeof f.label !== 'string' || f.label.length > 60 || typeof f.name !== 'string' || (f.to !== undefined && (typeof f.to !== 'string' || f.to.length > MAX_TO))) throw new Error('Favoris enregistrés invalides.');
     const key = favoriteKey(f);
     if (unique.has(key)) throw new Error('Favoris en double.');
     unique.add(key);
-    return {stop: f.stop, route: f.route, direction: f.direction, mode: f.mode, label: f.label, name: f.name};
+    return {stop: f.stop, route: f.route, direction: f.direction, mode: f.mode, label: f.label, name: f.name, ...(f.to ? {to: f.to} : {})};
   });
 }
 function parseTrigger(t) {

@@ -1,5 +1,5 @@
-import {el, svg} from './dom.mjs?v=17';
-import {MAX_GROUPS} from './store.mjs?v=17';
+import {el, svg} from './dom.mjs?v=18';
+import {MAX_GROUPS} from './store.mjs?v=18';
 const DAY_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const DAY_NAMES = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 const clock = at => at.replace(':', ' h ');
@@ -49,15 +49,26 @@ export function setupGroupEditor({onSave, onDelete, describe}) {
     }
     $('#no-trigger').hidden = triggers.length > 0;
   }
-  function open(group, favorites, favoriteKey) {
-    editing = group; triggers = group ? group.triggers.map(t => ({days: [...t.days], from: t.from})) : [{days: [1, 2, 3, 4, 5], from: '07:00'}];
-    $('#group-title').textContent = group ? 'Modifier le groupe' : 'Nouveau groupe'; $('#group-name').value = group?.name ?? ''; $('#group-delete').hidden = !group; $('#group-error').textContent = '';
-    const members = $('#member-list'); members.replaceChildren();
+  let listed = null;
+  function fillMembers(isChecked) {
+    const {favorites, favoriteKey} = listed, members = $('#member-list'); members.replaceChildren();
     for (const f of favorites) {
-      const label = el('label', 'member'), box = el('input'), info = describe(f), text = el('span', 'member-text'); box.type = 'checkbox'; box.value = favoriteKey(f); box.checked = group?.favorites.includes(box.value) ?? false;
+      const label = el('label', 'member'), box = el('input'), info = describe(f), text = el('span', 'member-text'); box.type = 'checkbox'; box.value = favoriteKey(f); box.checked = isChecked(box.value);
       text.append(el('span', 'member-stop', info.title)); if (info.direction) text.append(el('span', 'member-dir', info.direction)); label.title = [info.title, info.direction].filter(Boolean).join(' ');
       label.append(box, el('span', `route-badge ${info.className}`, info.badge), text); members.append(label);
     }
+  }
+  // Rebuilds the list once more is known about the stops (directions arriving), keeping what is ticked and the focus.
+  function refreshMembers() {
+    if (!dialog.open || !listed) return;
+    const ticked = new Set([...document.querySelectorAll('#member-list input:checked')].map(box => box.value)), focused = document.activeElement?.closest?.('#member-list') ? document.activeElement.value : null;
+    fillMembers(key => ticked.has(key));
+    if (focused) [...document.querySelectorAll('#member-list input')].find(box => box.value === focused)?.focus();
+  }
+  function open(group, favorites, favoriteKey) {
+    editing = group; triggers = group ? group.triggers.map(t => ({days: [...t.days], from: t.from})) : [{days: [1, 2, 3, 4, 5], from: '07:00'}];
+    $('#group-title').textContent = group ? 'Modifier le groupe' : 'Nouveau groupe'; $('#group-name').value = group?.name ?? ''; $('#group-delete').hidden = !group; $('#group-error').textContent = '';
+    listed = {favorites, favoriteKey}; fillMembers(key => group?.favorites.includes(key) ?? false);
     renderTriggers(); dialog.showModal(); $('#group-name').focus();
   }
   $('#add-trigger').addEventListener('click', () => { triggers.push({days: [1, 2, 3, 4, 5], from: '07:00'}); renderTriggers(); });
@@ -70,5 +81,5 @@ export function setupGroupEditor({onSave, onDelete, describe}) {
     onSave({id: editing?.id, name, favorites: [...document.querySelectorAll('#member-list input:checked')].map(box => box.value), triggers: triggers.map(t => ({days: [...t.days].sort((a, b) => a - b), from: t.from}))}, Boolean(editing));
     dialog.close();
   });
-  return {open};
+  return {open, refreshMembers};
 }

@@ -1,5 +1,5 @@
-import {encodeLink, decodeLink, exportFile, importFile} from './transfer.mjs?v=17';
-import {quebecDate} from './core.mjs?v=17';
+import {encodeLink, decodeLink, exportFile, importFile} from './transfer.mjs?v=18';
+import {quebecDate} from './core.mjs?v=18';
 const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
 const summary = ({favorites, groups}) => `${plural(favorites.length, 'arrêt')}, ${plural(groups.length, 'groupe')}`;
 // Wires the static transfer dialog (export link / file, import file / pasted link) and the replace confirmation.

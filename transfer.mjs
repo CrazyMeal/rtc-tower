@@ -1,5 +1,5 @@
-import {favoriteKey} from './core.mjs?v=17';
-import {parseState} from './store.mjs?v=17';
+import {favoriteKey} from './core.mjs?v=18';
+import {parseState} from './store.mjs?v=18';
 const LINK_VERSION = 1, MAX_LINK = 8000, MAX_PACKED = 65536, MAX_FILE = 100000, APP = 'rtc-tower';
 const bad = () => new Error('Ce lien de transfert est invalide ou incomplet.');
 function toBase64Url(bytes) {
@@ -33,14 +33,14 @@ const fromMask = mask => [1, 2, 3, 4, 5, 6, 7].filter(day => mask & 1 << (day - 
 export function pack({favorites, groups}) {
   const index = new Map(favorites.map((f, i) => [favoriteKey(f), i]));
   return [LINK_VERSION,
-    favorites.map(f => [f.stop, f.route, f.direction, f.mode === 'all' ? 'a' : 'r', f.label, f.name]),
+    favorites.map(f => [f.stop, f.route, f.direction, f.mode === 'all' ? 'a' : 'r', f.label, f.name, ...(f.to ? [f.to] : [])]),
     groups.map(g => [g.name, g.favorites.map(key => index.get(key)).filter(i => i !== undefined), g.triggers.map(t => [toMask(t.days), t.from.replace(':', '')])])];
 }
 export function unpack(packed) {
   if (!Array.isArray(packed) || packed[0] !== LINK_VERSION || !Array.isArray(packed[1]) || !Array.isArray(packed[2])) throw bad();
   const favorites = packed[1].map(t => {
     if (!Array.isArray(t)) throw bad();
-    return {stop: t[0], route: t[1], direction: t[2], mode: t[3] === 'a' ? 'all' : t[3] === 'r' ? 'route' : undefined, label: t[4], name: t[5]};
+    return {stop: t[0], route: t[1], direction: t[2], mode: t[3] === 'a' ? 'all' : t[3] === 'r' ? 'route' : undefined, label: t[4], name: t[5], ...(typeof t[6] === 'string' && t[6] ? {to: t[6]} : {})};
   });
   const stamp = Date.now().toString(36);
   const groups = packed[2].map((t, i) => {

@@ -45,3 +45,10 @@ test('reads the manual view tolerantly', () => {
   assert.deepEqual(readView('{"view":"g-abc","setAt":5}'), {view: 'g-abc', setAt: 5});
   for (const raw of [null, 'oops', '{"view":1,"setAt":5}', '{"view":"all"}']) assert.equal(readView(raw), null);
 });
+test('keeps the learned destination of a favorite and validates it', () => {
+  const withTo = {...EXAMPLE, to: 'Val-Bélair'};
+  assert.deepEqual(readState(serializeState({favorites: [withTo], groups: []})).favorites, [withTo]);
+  assert.equal('to' in readState(serializeState({favorites: [{...EXAMPLE, to: ''}], groups: []})).favorites[0], false);
+  assert.equal('to' in readState(serializeState({favorites: [EXAMPLE], groups: []})).favorites[0], false);
+  for (const to of [5, null, 'x'.repeat(81)]) assert.throws(() => readState(serializeState({favorites: [{...EXAMPLE, to}], groups: []})), undefined, String(to));
+});

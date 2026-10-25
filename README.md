@@ -20,13 +20,13 @@ Seuls les arrêts affichés par la vue courante sont interrogés (toutes les 30 
 
 Organisation du code : `core.mjs` (RTC), `store.mjs` (favoris et groupes, format v2 migré depuis v1), `schedule.mjs` (résolution du groupe actif, heure de Québec), `transfer.mjs` (export/import), `tiles.mjs`, `groups-ui.mjs` et `transfer-ui.mjs` (interface), `app.mjs` (orchestration). Les modules purs (`core`, `store`, `schedule`, `transfer`) sont testés avec Node.
 
-Les favoris sont conservés dans le `localStorage` de cette origine et de ce navigateur. Aucun compte ni synchronisation automatique.
+Les favoris sont conservés dans le `localStorage` de cette origine et de ce navigateur, avec la direction du parcours (`to`) apprise de la dernière réponse du RTC : elle survit donc à un rechargement et voyage avec les exports. Un favori enregistré avant cela, et jamais affiché depuis, est interrogé une seule fois à l’ouverture de l’éditeur de groupe. Aucun compte ni synchronisation automatique.
 
 ## Transférer sa configuration
 
 « Transférer mes arrêts » (colonne de droite) exporte les favoris et les groupes, pour les retrouver sur un autre appareil :
 
-- **Lien** : `…/#import=1.<données>`. Les données sont un JSON compact (favoris en tableaux, groupes qui pointent les favoris par position, jours en masque de bits), compressé en deflate puis encodé en base64url. Tout est dans le fragment (`#`), jamais envoyé au serveur ; le lien tient typiquement en quelques centaines de caractères. Copiez-le ou partagez-le (menu de partage du système si disponible), puis ouvrez-le sur l’autre appareil.
+- **Lien** : `…/#import=1.<données>`. Les données sont un JSON compact (favoris en tableaux avec leur direction, groupes qui pointent les favoris par position, jours en masque de bits), compressé en deflate puis encodé en base64url. Tout est dans le fragment (`#`), jamais envoyé au serveur ; le lien tient typiquement en quelques centaines de caractères. Copiez-le ou partagez-le (menu de partage du système si disponible), puis ouvrez-le sur l’autre appareil.
 - **Fichier** : `rtc-tower-AAAA-MM-JJ.json`, lisible, qui sert aussi de sauvegarde. Importez-le depuis le même dialogue, ou collez un lien d’export dans le champ prévu.
 
 L’import **remplace** les arrêts et groupes de l’appareil, après une confirmation qui compare l’existant et l’importé ; il n’est jamais silencieux. Les données importées passent par la même validation que le stockage local (formats, doublons, limites de 60 arrêts et 12 groupes) et la taille décompressée est plafonnée. Le choix manuel de groupe n’est pas transféré. Un lien créé depuis un serveur local (`localhost`, réseau privé) ne s’ouvre pas sur un autre appareil : utilisez le fichier ou le site publié.
