@@ -1,11 +1,11 @@
-import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse} from './core.mjs?v=14';
-import {VIEW_KEY, readState, serializeState, readView, removeFavorite, toggleMembership, upsertGroup, deleteGroup, moveFavorite} from './store.mjs?v=14';
-import {resolveView} from './schedule.mjs?v=14';
-import {timeFormat} from './dom.mjs?v=14';
-import {renderTile} from './tiles.mjs?v=14';
-import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=14';
-import {decodeLink} from './transfer.mjs?v=14';
-import {setupTransfer} from './transfer-ui.mjs?v=14';
+import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse} from './core.mjs?v=15';
+import {VIEW_KEY, readState, serializeState, readView, removeFavorite, toggleMembership, upsertGroup, deleteGroup, moveFavorite} from './store.mjs?v=15';
+import {resolveView} from './schedule.mjs?v=15';
+import {timeFormat} from './dom.mjs?v=15';
+import {renderTile} from './tiles.mjs?v=15';
+import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=15';
+import {decodeLink} from './transfer.mjs?v=15';
+import {setupTransfer} from './transfer-ui.mjs?v=15';
 const $ = selector => document.querySelector(selector);
 const cache = new Map();
 // Data younger than this is reused when a change (not a poll) asks for a refresh, to avoid bursts on the RTC API.

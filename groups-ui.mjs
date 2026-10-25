@@ -1,21 +1,35 @@
-import {el} from './dom.mjs?v=14';
-import {MAX_GROUPS} from './store.mjs?v=14';
+import {el, svg} from './dom.mjs?v=15';
+import {MAX_GROUPS} from './store.mjs?v=15';
 const DAY_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const DAY_NAMES = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 const clock = at => at.replace(':', ' h ');
-function when(until) { return `${until.dayOffset === 0 ? '' : until.dayOffset === 1 ? 'demain ' : `${DAY_NAMES[until.day - 1]} `}${clock(until.at)}`; }
+// "à 17 h 00", "demain à 05 h 00", "lundi à 05 h 00"
+function whenAt(until) { return `${until.dayOffset === 0 ? '' : until.dayOffset === 1 ? 'demain ' : `${DAY_NAMES[until.day - 1]} `}à ${clock(until.at)}`; }
 function button(className, text, callback) { const b = el('button', className, text); b.type = 'button'; b.addEventListener('click', callback); return b; }
-// The view bar: one pill per group plus "Tous", and a line saying why this view is showing.
+const STROKE = {fill: 'none', stroke: 'currentColor', 'stroke-width': '1.7', 'stroke-linecap': 'round', 'stroke-linejoin': 'round'};
+const icon = (className, d) => svg('0 0 24 24', className, [['', d]], STROKE);
+const ICONS = {auto: 'M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM12 8v4.5l3 1.7', manual: 'M9 4h6l-1 6 3 3H7l3-3zM12 13v7', edit: 'M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17zM14.5 7.5l2 2', next: 'M5 12h13M13 7l5 5-5 5'};
+// The view bar: one pill per group plus "Tous", the active one carrying its mode (clock = automatic, pin = chosen by hand), and a line saying what comes next.
 export function renderViewBar(bar, {groups, resolved, onSelect, onAuto, onEdit, onNew}) {
   bar.replaceChildren();
   if (!groups.length) { const create = button('view-pill is-new', '+ Créer un groupe', onNew); create.title = 'Afficher des arrêts différents selon le jour et l’heure'; bar.append(create); return; }
   const pills = el('div', 'view-pills'); pills.setAttribute('role', 'group'); pills.setAttribute('aria-label', 'Groupes d’arrêts');
-  for (const [id, name] of [...groups.map(g => [g.id, g.name]), ['all', 'Tous']]) { const pill = button('view-pill', name, () => onSelect(id)); pill.setAttribute('aria-pressed', String(resolved.id === id)); pills.append(pill); }
-  const status = el('p', 'view-status'), current = groups.find(g => g.id === resolved.id);
-  if (resolved.mode === 'manual') status.append(`Choisi manuellement${resolved.until ? ` · retour automatique ${when(resolved.until)}` : ''} `, button('text-button', 'Revenir en auto', onAuto));
-  else status.append(current ? `Automatique${resolved.until ? ` · jusqu’à ${when(resolved.until)}` : ''}` : 'Automatique · tous les arrêts');
-  if (current) status.append(' ', button('text-button', 'Modifier', () => onEdit(current.id)));
-  bar.append(pills); if (groups.length < MAX_GROUPS) bar.append(button('view-pill is-new', '+ Groupe', onNew)); bar.append(status);
+  for (const [id, name] of [...groups.map(g => [g.id, g.name]), ['all', 'Tous']]) {
+    const pill = button('view-pill', name, () => onSelect(id)), active = resolved.id === id; pill.setAttribute('aria-pressed', String(active));
+    if (!active) { pills.append(pill); continue; }
+    pill.prepend(icon('pill-icon', ICONS[resolved.mode === 'manual' ? 'manual' : 'auto']));
+    if (id === 'all') { pills.append(pill); continue; }
+    const edit = button('pill-edit', '', () => onEdit(id)); edit.append(icon('pill-icon', ICONS.edit)); edit.setAttribute('aria-label', `Modifier le groupe ${name}`); edit.title = 'Modifier ce groupe';
+    const split = el('div', 'view-pill-split'); split.append(pill, edit); pills.append(split);
+  }
+  const status = el('p', 'view-status'), next = resolved.next;
+  if (resolved.mode === 'manual') {
+    status.append(el('span', 'sr-only', 'Choisi manuellement. '), icon('status-arrow', ICONS.next), next ? `${next.group.id === resolved.id ? 'Automatique à nouveau' : `${next.group.name} reprend`} ${whenAt(next)} · ` : '', button('text-button', 'Revenir en auto', onAuto));
+  } else if (groups.some(g => g.id === resolved.id)) {
+    if (next) status.append(el('span', 'sr-only', 'Mode automatique. '), icon('status-arrow', ICONS.next), `${next.group.name} ${whenAt(next)}`);
+  } else status.append(el('span', 'sr-only', 'Mode automatique. '), icon('status-arrow', ICONS.next), 'Tous les arrêts, aucun horaire de groupe');
+  bar.append(pills); if (groups.length < MAX_GROUPS) bar.append(button('view-pill is-new', '+ Groupe', onNew));
+  if (status.childNodes.length) bar.append(status);
 }
 // Wires the static <dialog id="group-dialog"> once; open() fills it for a new or existing group.
 export function setupGroupEditor({onSave, onDelete}) {

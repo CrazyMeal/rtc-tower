@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {quebecClock, lastTrigger, nextTrigger, resolveView} from '../schedule.mjs';
+import {quebecClock, lastTrigger, nextTrigger, nextChange, resolveView} from '../schedule.mjs';
 const at = iso => new Date(iso);
 const weekdays = [1, 2, 3, 4, 5];
 const work = {id: 'g-work', name: 'Travail', favorites: [], triggers: [{days: weekdays, from: '05:00'}]};
@@ -26,7 +26,7 @@ test('ties go to the first group and no trigger means every stop', () => {
   const tied = [{...back, id: 'g-1'}, {...back, id: 'g-2'}];
   assert.equal(resolveView(tied, null, at('2026-10-27T21:10:00Z')).id, 'g-1');
   assert.equal(resolveView([{...work, triggers: []}], null, at('2026-10-27T21:10:00Z')).id, 'all');
-  assert.deepEqual(resolveView([], null, at('2026-10-27T21:10:00Z')), {id: 'all', mode: 'auto', until: null});
+  assert.deepEqual(resolveView([], null, at('2026-10-27T21:10:00Z')), {id: 'all', mode: 'auto', until: null, next: null});
   assert.equal(lastTrigger([], at('2026-10-27T21:10:00Z')), null);
   assert.equal(nextTrigger([], at('2026-10-27T21:10:00Z')), null);
 });
@@ -49,4 +49,27 @@ test('a manual choice holds until the next trigger, then automatic resumes', () 
   assert.equal(active('2026-10-27T11:41:00Z', {view: 'g-gone', setAt: manual.setAt}).mode, 'auto');
   assert.equal(active('2026-10-27T11:41:00Z', {view: 'all', setAt: at('2026-10-27T12:00:00Z').getTime()}).mode, 'auto', 'a choice dated in the future is ignored');
   assert.equal(active('2026-10-27T11:41:00Z', manual).until.at, '13:00');
+});
+test('the next change skips triggers of the group already shown', () => {
+  const split = {...work, triggers: [{days: weekdays, from: '05:00'}, {days: weekdays, from: '12:00'}]};
+  const tuesday = nextChange([split, back], 'g-work', at('2026-10-27T11:40:00Z'));
+  assert.deepEqual([tuesday.group.id, tuesday.at, tuesday.dayOffset], ['g-back', '13:00', 0]);
+  const evening = nextChange(groups, 'g-back', at('2026-10-27T21:10:00Z'));
+  assert.deepEqual([evening.group.id, evening.at, evening.dayOffset], ['g-work', '05:00', 1]);
+  const friday = nextChange(groups, 'g-back', at('2026-10-30T21:10:00Z'));
+  assert.deepEqual([friday.group.id, friday.at, friday.day], ['g-end', '00:00', 6]);
+  assert.equal(nextChange([work], 'g-work', at('2026-10-27T11:40:00Z')), null);
+  assert.equal(nextChange([], 'all'), null);
+});
+test('the next change follows list order for triggers in the same minute', () => {
+  const twin = {...back, id: 'g-twin', name: 'Jumeau'};
+  assert.equal(nextChange([work, back, twin], 'g-work', at('2026-10-27T11:40:00Z')).group.id, 'g-back');
+  assert.equal(nextChange([work, back, twin], 'g-back', at('2026-10-27T17:30:00Z')).group.id, 'g-work', 'a loser of the tie never takes over');
+});
+test('resolveView reports what comes next', () => {
+  const auto = active('2026-10-27T11:40:00Z');
+  assert.deepEqual([auto.mode, auto.id, auto.next.group.id, auto.next.at], ['auto', 'g-work', 'g-back', '13:00']);
+  const manual = active('2026-10-27T11:41:00Z', {view: 'g-back', setAt: at('2026-10-27T11:40:00Z').getTime()});
+  assert.deepEqual([manual.mode, manual.next.group.id, manual.next.at], ['manual', 'g-back', '13:00']);
+  assert.equal(resolveView([], null, at('2026-10-27T11:40:00Z')).next, null);
 });

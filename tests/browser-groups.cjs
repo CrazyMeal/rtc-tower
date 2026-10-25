@@ -24,7 +24,7 @@ await tile('5419:70:1').waitFor();
 // Morning: the work group is shown automatically.
 assert.equal(await page.locator('.tile').count(),1);
 assert.equal(await pill('Travail').getAttribute('aria-pressed'),'true');
-assert.match(await page.locator('.view-status').innerText(),/Automatique · jusqu’à 13 h 00/);
+assert.match(await page.locator('.view-status').innerText(),/Retour à 13 h 00/);
 // Only the shown stop is polled: 5015 belongs to another group and is never requested.
 assert.equal(calls['5015'],0);
 const first=calls['5419'];
@@ -43,7 +43,7 @@ await pill('Tous').click();
 await page.waitForFunction(()=>document.querySelectorAll('.tile').length===2);await page.waitForTimeout(300);
 assert.equal(calls['5015'],beforeAll['5015'],'fresh data is reused when the view changes');
 assert.equal(calls['5419'],beforeAll['5419']+1,'stale data of a newly shown stop is requested');
-assert.match(await page.locator('.view-status').innerText(),/Choisi manuellement · retour automatique demain 05 h 00/);
+assert.match(await page.locator('.view-status').innerText(),/Travail reprend demain à 05 h 00/);
 const beforeBack={...calls};
 await page.getByRole('button',{name:'Revenir en auto'}).click();
 await page.waitForFunction(()=>document.querySelectorAll('.tile').length===1);await page.waitForTimeout(300);
@@ -56,7 +56,7 @@ assert.equal(calls['5015'],beforeBack['5015']+1);assert.equal(calls['5419'],befo
 await pill('Travail').click();await tile('5419:70:1').waitFor();
 await page.reload();await tile('5419:70:1').waitFor();
 assert.equal(await pill('Travail').getAttribute('aria-pressed'),'true');
-assert.match(await page.locator('.view-status').innerText(),/Choisi manuellement/);
+assert.match(await page.locator('.view-status').innerText(),/reprend|Automatique à nouveau/);
 // Create a group from the dialog; it opens right away.
 await page.getByRole('button',{name:'+ Groupe'}).click();
 await page.locator('#group-name').fill('Soir');
@@ -75,7 +75,7 @@ assert.equal(await page.getByRole('button',{name:'Groupe Soir : Galeries/5419'})
 await page.waitForTimeout(300);assert.deepEqual(calls,beforeToggle,'changing group membership makes no request');
 await pill('Soir').click();await page.waitForFunction(()=>document.querySelectorAll('.tile').length===2);
 // Deleting the group falls back to automatic.
-await page.getByRole('button',{name:'Modifier',exact:true}).click();
+await page.getByRole('button',{name:/^Modifier le groupe/}).click();
 await page.locator('#group-delete').click();
 await page.waitForFunction(()=>![...document.querySelectorAll('.view-pill')].some(p=>p.textContent==='Soir'));
 assert.equal(await page.locator('.view-pill:not(.is-new)').count(),3);
