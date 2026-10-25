@@ -3,7 +3,7 @@ import {VIEW_KEY, readState, serializeState, readView, removeFavorite, toggleMem
 import {resolveView} from './schedule.mjs?v=18';
 import {timeFormat} from './dom.mjs?v=18';
 import {renderTile} from './tiles.mjs?v=18';
-import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=18';
+import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=19';
 import {decodeLink} from './transfer.mjs?v=18';
 import {setupTransfer} from './transfer-ui.mjs?v=18';
 import {setupInstall} from './install-ui.mjs?v=18';
@@ -107,7 +107,7 @@ function render() {
   list.replaceChildren(); $('#empty').hidden = favorites.length > 0;
   $('#group-empty').hidden = !favorites.length || visible.length > 0; $('#group-empty-name').textContent = group?.name ?? '';
   $('#view-bar').hidden = !favorites.length;
-  renderViewBar($('#view-bar'), {groups, resolved: view, onSelect: id => { if (id !== view.id || view.mode === 'manual') chooseView(id); }, onAuto: () => chooseView(null), onEdit: id => openEditor(groups.find(g => g.id === id)), onNew: () => openEditor(null)});
+  renderViewBar($('#view-bar'), $('#view-status'), {groups, resolved: view, onSelect: id => { if (id !== view.id || view.mode === 'manual') chooseView(id); }, onAuto: () => chooseView(null), onEdit: id => openEditor(groups.find(g => g.id === id)), onNew: () => openEditor(null)});
   visible.forEach((f, position) => {
     const state = cache.get(favoriteKey(f)), stale = state?.updated && Date.now() - state.updated > 90000;
     if (state?.entries) for (const entry of state.entries) list.append(renderTile(f, position, visible.length, entry, state, stale, ui));
@@ -140,7 +140,7 @@ async function refresh({queue = false, maxAge = 0} = {}) {
 function updateRefreshStatus() {
   const failing = visibleFavorites(currentView()).some(f => cache.get(favoriteKey(f))?.error);
   const received = lastRefresh ? `Reçu à ${timeFormat.format(new Date(lastRefresh))}${failing ? ' · à confirmer' : ''}` : '';
-  $('#refresh-status').textContent = refreshing ? 'Actualisation…' : document.hidden ? 'Actualisation en pause.' : received;
+  $('#refresh-status').textContent = document.hidden ? 'Actualisation en pause.' : refreshing && !lastRefresh ? 'Actualisation…' : received;
 }
 $('#add-form').addEventListener('submit', async event => {
   event.preventDefault(); const status = $('#form-status'), submit = $('#add-submit'); status.classList.remove('error'); status.textContent = '';

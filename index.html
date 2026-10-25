@@ -9,8 +9,8 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23152b2a'/%3E%3Cg transform='translate(4 4)' fill='none' stroke='%23fffef9' stroke-width='1.7' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='2' fill='%23df541e' stroke='none'/%3E%3Cpath d='M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8'/%3E%3C/g%3E%3C/svg%3E">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=21">
-  <script type="module" src="app.mjs?v=21"></script>
+  <link rel="stylesheet" href="styles.css?v=22">
+  <script type="module" src="app.mjs?v=22"></script>
 </head>
 <body>
   <header class="masthead"><a class="brand" href="./" aria-label="RTC Tower, accueil"><span class="brand-mark" aria-hidden="true"><svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="2" fill="var(--orange)" stroke="none"/><path d="M8.5 8.5a5 5 0 0 0 0 7M15.5 8.5a5 5 0 0 1 0 7M5.6 5.6a9 9 0 0 0 0 12.8M18.4 5.6a9 9 0 0 1 0 12.8"/></svg></span>RTC Tower<span class="brand-dot">.</span></a><div class="header-actions"><button id="install-app" class="primary-button compact install-action" type="button" hidden><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14"/></svg><span>Installer</span></button><button id="open-transfer" class="secondary-button header-action" type="button" aria-label="Transférer mes arrêts vers un autre appareil"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4"/></svg><span>Transférer</span></button></div></header>
@@ -18,7 +18,7 @@
     <div class="workspace">
       <section class="favorites-section" aria-labelledby="favorites-title">
         <h1 id="favorites-title" class="sr-only">Mes arrêts</h1>
-        <div class="section-heading"><div id="view-bar" class="view-bar"></div><div class="refresh-group"><span id="refresh-status" class="refresh-status" role="status"></span><button id="refresh" class="text-button" type="button"><span aria-hidden="true">↻</span> Actualiser</button></div></div>
+        <div class="section-heading"><div id="view-bar" class="view-bar"></div><div class="status-row"><p id="view-status" class="view-status"></p><div class="refresh-group"><span id="refresh-status" class="refresh-status" role="status"></span><button id="refresh" class="text-button refresh-button" type="button" aria-label="Actualiser" title="Actualiser"><span class="refresh-icon" aria-hidden="true">↻</span><span class="refresh-label"> Actualiser</span></button></div></div></div>
         <p id="transfer-notice" class="notice" role="alert" hidden></p>
         <p id="storage-warning" class="notice" role="alert" hidden></p>
         <div id="favorites"></div>
