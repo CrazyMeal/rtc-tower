@@ -69,3 +69,12 @@
 .scheduled-icon{color:var(--muted);opacity:.7}
 .scheduled-icon path{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .realtime-icon.is-lost path{stroke:var(--muted);animation:none;opacity:.6}
+.transfer-open{display:block;margin:14px 6px 0}
+#transfer-dialog{max-width:520px;max-height:calc(100dvh - 32px);overflow:auto}
+.transfer h3{font-size:15px;margin:22px 0 4px}
+.transfer section+section{border-top:1px solid var(--line);margin-top:20px}
+.transfer input[readonly]{font:11px monospace;text-overflow:ellipsis}
+.transfer input[type=file]{padding:9px 11px}
+.transfer-actions{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:8px}
+#transfer-notice{cursor:pointer}
+#import-dialog .dialog-actions{margin-top:22px}

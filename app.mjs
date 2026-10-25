@@ -1,9 +1,11 @@
-import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse} from './core.mjs?v=11';
-import {VIEW_KEY, readState, serializeState, readView, removeFavorite, toggleMembership, upsertGroup, deleteGroup, moveFavorite} from './store.mjs?v=11';
-import {resolveView} from './schedule.mjs?v=11';
-import {timeFormat} from './dom.mjs?v=11';
-import {renderTile} from './tiles.mjs?v=11';
-import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=11';
+import {STORAGE_KEY, favoriteKey, parseStopUrl, apiUrl, validateResponse} from './core.mjs?v=12';
+import {VIEW_KEY, readState, serializeState, readView, removeFavorite, toggleMembership, upsertGroup, deleteGroup, moveFavorite} from './store.mjs?v=12';
+import {resolveView} from './schedule.mjs?v=12';
+import {timeFormat} from './dom.mjs?v=12';
+import {renderTile} from './tiles.mjs?v=12';
+import {renderViewBar, setupGroupEditor} from './groups-ui.mjs?v=12';
+import {decodeLink} from './transfer.mjs?v=12';
+import {setupTransfer} from './transfer-ui.mjs?v=12';
 const $ = selector => document.querySelector(selector);
 const cache = new Map();
 // Data younger than this is reused when a change (not a poll) asks for a refresh, to avoid bursts on the RTC API.
@@ -44,6 +46,20 @@ const editor = setupGroupEditor({
   },
   onDelete(id) { if (manual?.view === id) { manual = null; saveView(); } commit(deleteGroup(snapshot(), id)); refresh(reuse); }
 });
+// A confirmed import replaces everything, and is also a way out when the stored data was unreadable.
+function applyImport(state) {
+  cache.clear(); manual = null; savingAllowed = true; $('#storage-warning').hidden = true; $('#transfer-notice').hidden = true;
+  saveView(); commit(state); refresh(reuse);
+}
+const transfer = setupTransfer({getState: snapshot, onImport: applyImport});
+async function handleImportLink() {
+  if (!location.hash.startsWith('#import=')) return;
+  const hash = location.hash; history.replaceState(null, '', location.pathname + location.search);
+  try { transfer.confirmImport(await decodeLink(hash)); }
+  catch (error) { $('#transfer-notice').textContent = `${error.message} Votre configuration actuelle n’a pas changé. (Cliquez pour masquer.)`; $('#transfer-notice').hidden = false; }
+}
+$('#transfer-notice').addEventListener('click', event => { event.currentTarget.hidden = true; });
+window.addEventListener('hashchange', handleImportLink);
 const ui = {
   expanded: new Set(), menuKey: null,
   get groups() { return groups; },
@@ -133,7 +149,7 @@ window.addEventListener('storage', event => {
 });
 document.addEventListener('visibilitychange', () => { updateRefreshStatus(); if (!document.hidden) refresh({maxAge: FRESH_MS}); });
 window.addEventListener('online', () => refresh());
-save(); render(); refresh();
+save(); render(); refresh(); handleImportLink();
 setInterval(() => {
   if (document.hidden) return;
   const view = currentView();

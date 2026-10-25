@@ -18,9 +18,18 @@ Un groupe (Travail, Retour, Week-end…) choisit quels favoris afficher selon le
 
 Seuls les arrêts affichés par la vue courante sont interrogés (toutes les 30 s, onglet visible) ; ceux des autres groupes ne le sont pas. Lors d’un changement de vue ou de groupe, les données de moins de 25 s sont réutilisées au lieu d’être redemandées.
 
-Organisation du code : `core.mjs` (RTC), `store.mjs` (favoris et groupes, format v2 migré depuis v1), `schedule.mjs` (résolution du groupe actif, heure de Québec), `tiles.mjs` et `groups-ui.mjs` (interface), `app.mjs` (orchestration). Les trois premiers sont purs et testés avec Node.
+Organisation du code : `core.mjs` (RTC), `store.mjs` (favoris et groupes, format v2 migré depuis v1), `schedule.mjs` (résolution du groupe actif, heure de Québec), `transfer.mjs` (export/import), `tiles.mjs`, `groups-ui.mjs` et `transfer-ui.mjs` (interface), `app.mjs` (orchestration). Les modules purs (`core`, `store`, `schedule`, `transfer`) sont testés avec Node.
 
-Les favoris sont conservés dans le `localStorage` de cette origine et de ce navigateur. Aucun compte, synchronisation, import ou export dans cette version.
+Les favoris sont conservés dans le `localStorage` de cette origine et de ce navigateur. Aucun compte ni synchronisation automatique.
+
+## Transférer sa configuration
+
+« Transférer mes arrêts » (colonne de droite) exporte les favoris et les groupes, pour les retrouver sur un autre appareil :
+
+- **Lien** : `…/#import=1.<données>`. Les données sont un JSON compact (favoris en tableaux, groupes qui pointent les favoris par position, jours en masque de bits), compressé en deflate puis encodé en base64url. Tout est dans le fragment (`#`), jamais envoyé au serveur ; le lien tient typiquement en quelques centaines de caractères. Copiez-le ou partagez-le (menu de partage du système si disponible), puis ouvrez-le sur l’autre appareil.
+- **Fichier** : `rtc-tower-AAAA-MM-JJ.json`, lisible, qui sert aussi de sauvegarde. Importez-le depuis le même dialogue, ou collez un lien d’export dans le champ prévu.
+
+L’import **remplace** les arrêts et groupes de l’appareil, après une confirmation qui compare l’existant et l’importé ; il n’est jamais silencieux. Les données importées passent par la même validation que le stockage local (formats, doublons, limites de 60 arrêts et 12 groupes) et la taille décompressée est plafonnée. Le choix manuel de groupe n’est pas transféré. Un lien créé depuis un serveur local (`localhost`, réseau privé) ne s’ouvre pas sur un autre appareil : utilisez le fichier ou le site publié.
 
 ## Vérifier
 
@@ -47,7 +56,7 @@ Cette API utilisée par le site du RTC n’est pas établie comme une API publiq
 - Ajout par URL RTC et validation par l’API avant sauvegarde.
 - Favoris locaux : parcours du lien ou arrêt complet, renommage, ordre et suppression.
 - Passages, direction, temps réel/planifié, annulations et erreurs explicites.
-- Pas de backend, compte, import/export ou déploiement automatique.
+- Pas de backend, compte ou déploiement automatique.
 
 ### Tests de l’interface (facultatifs)
 
@@ -58,7 +67,7 @@ npm install --prefix /tmp/rtc-browser --cache /tmp/rtc-npm-cache --no-audit --no
 NODE_PATH=/tmp/rtc-browser/node_modules node tests/browser.cjs
 ```
 
-`tests/browser-groups.cjs` couvre les groupes avec une horloge simulée (`page.clock`) : bascule automatique, choix manuel, création, appartenance, suppression.
+`tests/browser-transfer.cjs` couvre l’export et l’import (lien, fichier, lien altéré, confirmation). `tests/browser-groups.cjs` couvre les groupes avec une horloge simulée (`page.clock`) : bascule automatique, choix manuel, création, appartenance, suppression.
 
 Les captures de test sont écrites dans `/tmp/rtc-desktop.png` et `/tmp/rtc-mobile.png`. L’installation de Playwright sert uniquement aux tests ; aucun paquet npm n’est nécessaire pour utiliser la page.
 

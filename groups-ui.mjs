@@ -1,5 +1,5 @@
-import {el} from './dom.mjs?v=11';
-import {MAX_GROUPS} from './store.mjs?v=11';
+import {el} from './dom.mjs?v=12';
+import {MAX_GROUPS} from './store.mjs?v=12';
 const DAY_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const DAY_NAMES = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 const clock = at => at.replace(':', ' h ');

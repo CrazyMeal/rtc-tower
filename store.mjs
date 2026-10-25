@@ -1,8 +1,10 @@
-import {EXAMPLE, favoriteKey} from './core.mjs?v=11';
+import {EXAMPLE, favoriteKey} from './core.mjs?v=12';
 export const VIEW_KEY = 'rtc-tower.view.v1';
 export const MAX_GROUPS = 12;
+export const MAX_FAVORITES = 60;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
 function parseFavorites(list) {
+  if (list.length > MAX_FAVORITES) throw new Error('Trop de favoris.');
   const unique = new Set();
   return list.map(f => {
     if (!f || !/^\d{1,6}$/.test(f.stop) || !/^\d{1,4}$/.test(f.route) || !/^\d{1,2}$/.test(f.direction) || !['route', 'all'].includes(f.mode) || typeof f.label !== 'string' || f.label.length > 60 || typeof f.name !== 'string') throw new Error('Favoris enregistrés invalides.');
@@ -25,12 +27,14 @@ function parseGroups(list, favorites) {
     return {id: g.id, name: g.name.trim(), favorites: [...new Set(g.favorites.filter(key => keys.has(key)))], triggers: g.triggers.map(parseTrigger)};
   });
 }
-export function readState(raw) {
-  if (raw === null) return {favorites: [{...EXAMPLE}], groups: []};
-  const saved = JSON.parse(raw);
+export function parseState(saved) {
   if (!saved || ![1, 2].includes(saved.version) || !Array.isArray(saved.favorites)) throw new Error('Format de favoris inconnu.');
   const favorites = parseFavorites(saved.favorites);
   return {favorites, groups: saved.version === 2 ? parseGroups(saved.groups, favorites) : []};
+}
+export function readState(raw) {
+  if (raw === null) return {favorites: [{...EXAMPLE}], groups: []};
+  return parseState(JSON.parse(raw));
 }
 export const serializeState = ({favorites, groups}) => JSON.stringify({version: 2, favorites, groups});
 // The manual view is a convenience: anything unreadable simply means "automatic".
