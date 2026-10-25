@@ -98,3 +98,6 @@
 .transfer-actions{margin:12px 0 0}
 .transfer-actions+.field-row{margin-top:14px}
 @media(max-width:480px){.field-row{flex-direction:column}.field-row .secondary-button,.primary-button.compact{width:100%}.header-action{padding:7px 11px}}
+.primary-button.compact{gap:8px;transition:background .15s,transform .15s}
+.primary-button.is-done{background:var(--green)}
+.primary-button.compact span{font-size:inherit}

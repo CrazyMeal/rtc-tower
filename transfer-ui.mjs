@@ -1,12 +1,21 @@
-import {encodeLink, decodeLink, exportFile, importFile} from './transfer.mjs?v=13';
-import {quebecDate} from './core.mjs?v=13';
+import {encodeLink, decodeLink, exportFile, importFile} from './transfer.mjs?v=14';
+import {quebecDate} from './core.mjs?v=14';
 const plural = (n, word) => `${n} ${word}${n > 1 ? 's' : ''}`;
 const summary = ({favorites, groups}) => `${plural(favorites.length, 'arrêt')}, ${plural(groups.length, 'groupe')}`;
 // Wires the static transfer dialog (export link / file, import file / pasted link) and the replace confirmation.
 export function setupTransfer({getState, onImport}) {
   const $ = selector => document.querySelector(selector), dialog = $('#transfer-dialog'), confirm = $('#import-dialog'), status = $('#transfer-status');
   let pending = null;
-  const say = (text, error = false) => { status.classList.toggle('error', error); status.textContent = text; };
+  // Successes are announced to screen readers only: the button itself shows them.
+  const say = (text, error = false) => { status.classList.toggle('error', error); status.classList.toggle('sr-only', Boolean(text) && !error); status.textContent = text; };
+  let copiedTimer = null;
+  function showCopied() {
+    const button = $('#transfer-copy'), label = button.querySelector('span'), check = button.querySelector('.copy-check');
+    clearTimeout(copiedTimer);
+    if (!button.classList.contains('is-done')) button.style.minWidth = `${button.offsetWidth}px`;
+    button.classList.add('is-done'); check.toggleAttribute('hidden', false); label.textContent = 'Copié';
+    copiedTimer = setTimeout(() => { button.classList.remove('is-done'); check.toggleAttribute('hidden', true); label.textContent = 'Copier le lien'; button.style.minWidth = ''; }, 2000);
+  }
   const base = () => `${location.origin}${location.pathname}${location.search}`;
   function confirmImport(state) {
     const names = state.groups.map(g => g.name).join(', ');
@@ -37,7 +46,7 @@ export function setupTransfer({getState, onImport}) {
   $('#transfer-link').addEventListener('focus', event => event.target.select());
   $('#transfer-copy').addEventListener('click', async () => {
     const field = $('#transfer-link'); if (!field.value) return;
-    try { await navigator.clipboard.writeText(field.value); say('Lien copié.'); } catch { field.select(); say('Copie impossible : le lien est sélectionné, copiez-le à la main.', true); }
+    try { await navigator.clipboard.writeText(field.value); showCopied(); say('Lien copié.'); } catch { field.select(); say('Copie impossible : le lien est sélectionné, copiez-le à la main.', true); }
   });
   $('#transfer-share').addEventListener('click', async () => {
     try { await navigator.share({title: 'Mes arrêts RTC Tower', url: $('#transfer-link').value}); } catch (error) { if (error.name !== 'AbortError') say('Partage impossible. Copiez le lien à la place.', true); }
@@ -45,7 +54,6 @@ export function setupTransfer({getState, onImport}) {
   $('#transfer-download').addEventListener('click', () => {
     const date = quebecDate(), url = URL.createObjectURL(new Blob([exportFile(getState())], {type: 'application/json'})), a = document.createElement('a');
     a.href = url; a.download = `rtc-tower-${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6)}.json`; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-    say('Fichier téléchargé.');
   });
   $('#import-cancel').addEventListener('click', () => { pending = null; confirm.close(); });
   $('#import-form').addEventListener('submit', event => { event.preventDefault(); const state = pending; pending = null; confirm.close(); if (state) onImport(state); });

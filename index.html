@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#152b2a">
   <meta name="description" content="Vos arrêts RTC et les prochains passages, au même endroit.">
   <title>Mes passages · RTC Tower</title>
-  <link rel="stylesheet" href="styles.css?v=13">
-  <script type="module" src="app.mjs?v=13"></script>
+  <link rel="stylesheet" href="styles.css?v=14">
+  <script type="module" src="app.mjs?v=14"></script>
 </head>
 <body>
   <header class="masthead"><a class="brand" href="./" aria-label="RTC Tower, accueil"><span class="brand-mark" aria-hidden="true"><svg class="out-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></span> rtc tower<span class="brand-dot">.</span></a><button id="open-transfer" class="secondary-button header-action" type="button" aria-label="Transférer mes arrêts vers un autre appareil"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h15M15 4l4 4-4 4M20 16H5M9 12l-4 4 4 4"/></svg><span>Transférer</span></button></header>
@@ -44,7 +44,7 @@
   <dialog id="transfer-dialog"><div class="transfer">
     <div class="dialog-head"><h2>Transférer mes arrêts</h2><button type="button" id="transfer-close" class="close-button" aria-label="Fermer"><svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
     <section aria-labelledby="export-title"><h3 id="export-title">Exporter</h3><p class="small-note">Ouvrez ce lien sur votre téléphone ou un autre navigateur pour y retrouver vos arrêts et vos groupes.</p>
-      <div class="field-row"><input id="transfer-link" readonly aria-label="Lien d’export" autocomplete="off"><button type="button" id="transfer-copy" class="primary-button compact">Copier le lien</button></div>
+      <div class="field-row"><input id="transfer-link" readonly aria-label="Lien d’export" autocomplete="off"><button type="button" id="transfer-copy" class="primary-button compact"><svg class="btn-icon copy-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" hidden><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><span>Copier le lien</span></button></div>
       <p id="transfer-local" class="small-note" hidden>Ce lien pointe vers un serveur local : il ne s’ouvrira pas sur un autre appareil. Utilisez plutôt le fichier, ou ouvrez le site publié.</p>
       <div class="transfer-actions"><button type="button" id="transfer-share" class="secondary-button" hidden>Partager…</button><button type="button" id="transfer-download" class="secondary-button">Télécharger le fichier</button></div></section>
     <section aria-labelledby="import-title"><h3 id="import-title">Importer</h3><p class="small-note">Depuis un fichier d’export ou un lien copié sur l’autre appareil.</p>

@@ -14,7 +14,7 @@ await A.page.locator('#open-transfer').click();
 await A.page.waitForFunction(()=>document.querySelector('#transfer-link').value.includes('#import=1.'));
 const link=await A.page.locator('#transfer-link').inputValue();
 assert.ok(await A.page.locator('#transfer-local').isVisible(),'local server warning shown');
-await A.page.locator('#transfer-copy').click();await A.page.getByText('Lien copié.').waitFor();assert.equal(await A.page.evaluate(()=>navigator.clipboard.readText()),link);
+await A.page.locator('#transfer-copy').click();await A.page.locator('#transfer-copy.is-done').waitFor();assert.equal((await A.page.locator('#transfer-copy').innerText()).trim(),'Copié');assert.equal(await A.page.locator('#transfer-status').evaluate(n=>n.classList.contains('sr-only')),true);await A.page.waitForFunction(()=>!document.querySelector('#transfer-copy').classList.contains('is-done'),null,{timeout:4000});assert.equal((await A.page.locator('#transfer-copy').innerText()).trim(),'Copier le lien');await A.page.locator('#transfer-copy').click();assert.equal(await A.page.evaluate(()=>navigator.clipboard.readText()),link);
 const [download]=await Promise.all([A.page.waitForEvent('download'),A.page.locator('#transfer-download').click()]);
 assert.match(download.suggestedFilename(),/^rtc-tower-\d{4}-\d{2}-\d{2}\.json$/);const file=await download.path();
 // B: empty device opens the link; cancel keeps its own config.

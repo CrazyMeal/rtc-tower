@@ -1,4 +1,4 @@
-import {EXAMPLE, favoriteKey} from './core.mjs?v=13';
+import {EXAMPLE, favoriteKey} from './core.mjs?v=14';
 export const VIEW_KEY = 'rtc-tower.view.v1';
 export const MAX_GROUPS = 12;
 export const MAX_FAVORITES = 60;
