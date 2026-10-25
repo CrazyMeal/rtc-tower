@@ -1,5 +1,5 @@
-import {favoriteKey, countdown, serviceType} from './core.mjs?v=15';
-import {el, svg, timeFormat} from './dom.mjs?v=15';
+import {favoriteKey, countdown, serviceType, stopTitle} from './core.mjs?v=16';
+import {el, svg, timeFormat} from './dom.mjs?v=16';
 const realtimeIcon = (lost = false) => svg('0 0 20 20', `status-icon realtime-icon${lost ? ' is-lost' : ''}`, [['wave-inner', 'M2 8a10 10 0 0 1 10 10'], ['wave-outer', 'M2 2a16 16 0 0 1 16 16']]);
 const scheduledIcon = () => svg('0 0 20 20', 'status-icon scheduled-icon', [['', 'M4 5h12a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 16 17H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 5zM2.5 9h15M6.5 2.5v3M13.5 2.5v3']]);
 const arrow = () => svg('0 0 24 24', 'direction-arrow', [['', 'M4 12h15M13 6l6 6-6 6']], {fill: 'none', stroke: 'currentColor', 'stroke-width': '2.4'});
@@ -42,7 +42,7 @@ export function renderTile(f, position, count, entry, state, stale, ui) {
   const badge = el('span', `route-badge ${entry ? type.className : 'is-unknown'}`, entry ? entry.parcours.noParcours : f.mode === 'all' ? '···' : f.route); if (entry) badge.title = type.name;
   const destination = entry?.parcours.descriptionDirection || (entry ? 'Destination non précisée' : '');
   const direction = el('div', 'direction'); if (entry) { direction.append(arrow(), el('span', '', destination)); direction.title = destination; direction.setAttribute('aria-label', `Direction ${entry.parcours.descriptionDirection || 'non précisée'}`); }
-  const stop = el('div', 'stop-line'), link = el('a', '', `${f.label || String(entry?.arret.nom || f.name).replace(/\s*\/?\s*\d{4,}$/, '')} · ${f.stop}`); link.href = sourceLink(f, entry); link.target = '_blank'; link.rel = 'noopener noreferrer'; link.title = 'Voir sur le site du RTC'; stop.append(link);
+  const stop = el('div', 'stop-line'), link = el('a', '', stopTitle(f, entry)); link.href = sourceLink(f, entry); link.target = '_blank'; link.rel = 'noopener noreferrer'; link.title = 'Voir sur le site du RTC'; stop.append(link);
   const info = el('div', 'tile-info'); info.append(direction, stop); card.append(badge, info, menu(f, position, count, menuKey, ui));
   if (!entry) { card.append(el('p', 'route-message', state?.error || 'Recherche des prochains passages…')); return card; }
   if (state.error || stale) card.append(el('p', 'tile-note', `${state.error || 'Les données ne sont plus à jour.'} Derniers passages à confirmer.`));

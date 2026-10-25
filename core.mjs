@@ -1,6 +1,8 @@
 export const STORAGE_KEY = 'rtc-tower.favorites.v1';
 export const EXAMPLE = {stop: '5419', route: '70', direction: '1', mode: 'route', label: '', name: 'Galeries / 5419'};
 export function favoriteKey(f) { return `${f.stop}:${f.mode === 'all' ? 'all' : `${f.route}:${f.direction}`}`; }
+// The stop as shown on tiles and in lists: custom label or RTC name without its trailing stop number, then the number.
+export const stopTitle = (f, entry) => `${f.label || String(entry?.arret.nom || f.name).replace(/\s*\/?\s*\d{4,}$/, '')} · ${f.stop}`;
 export function parseStopUrl(value) {
   let url;
   try { url = new URL(value.trim()); } catch { throw new Error('Collez un lien complet vers une page d’arrêt du RTC.'); }

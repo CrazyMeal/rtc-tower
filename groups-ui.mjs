@@ -1,5 +1,5 @@
-import {el, svg} from './dom.mjs?v=15';
-import {MAX_GROUPS} from './store.mjs?v=15';
+import {el, svg} from './dom.mjs?v=16';
+import {MAX_GROUPS} from './store.mjs?v=16';
 const DAY_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 const DAY_NAMES = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 const clock = at => at.replace(':', ' h ');
@@ -32,7 +32,7 @@ export function renderViewBar(bar, {groups, resolved, onSelect, onAuto, onEdit, 
   if (status.childNodes.length) bar.append(status);
 }
 // Wires the static <dialog id="group-dialog"> once; open() fills it for a new or existing group.
-export function setupGroupEditor({onSave, onDelete}) {
+export function setupGroupEditor({onSave, onDelete, describe}) {
   const $ = selector => document.querySelector(selector), dialog = $('#group-dialog');
   let editing = null, triggers = [];
   function renderTriggers() {
@@ -54,8 +54,9 @@ export function setupGroupEditor({onSave, onDelete}) {
     $('#group-title').textContent = group ? 'Modifier le groupe' : 'Nouveau groupe'; $('#group-name').value = group?.name ?? ''; $('#group-delete').hidden = !group; $('#group-error').textContent = '';
     const members = $('#member-list'); members.replaceChildren();
     for (const f of favorites) {
-      const label = el('label', 'member'), box = el('input'); box.type = 'checkbox'; box.value = favoriteKey(f); box.checked = group?.favorites.includes(box.value) ?? false;
-      label.append(box, el('span', '', `${f.label || f.name} · ${f.mode === 'all' ? 'tous les parcours' : `ligne ${f.route}`}`)); members.append(label);
+      const label = el('label', 'member'), box = el('input'), info = describe(f), text = el('span', 'member-text'); box.type = 'checkbox'; box.value = favoriteKey(f); box.checked = group?.favorites.includes(box.value) ?? false;
+      text.append(el('span', 'member-stop', info.title)); if (info.direction) text.append(el('span', 'member-dir', info.direction)); label.title = [info.title, info.direction].filter(Boolean).join(' ');
+      label.append(box, el('span', `route-badge ${info.className}`, info.badge), text); members.append(label);
     }
     renderTriggers(); dialog.showModal(); $('#group-name').focus();
   }

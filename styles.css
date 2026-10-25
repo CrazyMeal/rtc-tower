@@ -61,6 +61,8 @@
 .trigger-from{font-size:12px;color:var(--muted)}
 .trigger-row input[type=time]{width:auto;min-height:34px;padding:6px 8px}
 .member{display:flex;align-items:center;gap:10px;margin:0;padding:7px 0;font-weight:400;font-size:13px}
+.member .route-badge{min-width:36px;padding:3px 6px;font:bold 13px monospace;border-radius:5px;flex-shrink:0}.member .route-badge.is-unknown{background:#8a9388}
+.member-text{display:flex;flex-direction:column;min-width:0;line-height:1.35}.member-stop,.member-dir{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.member-dir{font-size:11px;color:var(--muted)}
 .member input{width:auto;min-height:0}
 .danger{color:#9c3c17;margin-right:auto;padding-left:0}
 
@@ -111,3 +113,4 @@
 .view-pill[aria-pressed=true]:not(.is-new){gap:6px}
 .pill-icon{width:15px;height:15px;flex-shrink:0}
 .status-arrow{width:14px;height:14px;flex-shrink:0;margin-right:2px}
+.group-fieldset{min-width:0}.member{min-width:0}.member input{flex-shrink:0}
