@@ -1,4 +1,4 @@
-import {EXAMPLE, favoriteKey} from './core.mjs?v=10';
+import {EXAMPLE, favoriteKey} from './core.mjs?v=11';
 export const VIEW_KEY = 'rtc-tower.view.v1';
 export const MAX_GROUPS = 12;
 const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;

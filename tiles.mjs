@@ -1,20 +1,24 @@
-import {favoriteKey, countdown, serviceType} from './core.mjs?v=10';
-import {el, svg, timeFormat} from './dom.mjs?v=10';
-const realtimeIcon = () => svg('0 0 20 20', 'realtime-icon', [['wave-inner', 'M2 8a10 10 0 0 1 10 10'], ['wave-outer', 'M2 2a16 16 0 0 1 16 16']]);
+import {favoriteKey, countdown, serviceType} from './core.mjs?v=11';
+import {el, svg, timeFormat} from './dom.mjs?v=11';
+const realtimeIcon = (lost = false) => svg('0 0 20 20', `status-icon realtime-icon${lost ? ' is-lost' : ''}`, [['wave-inner', 'M2 8a10 10 0 0 1 10 10'], ['wave-outer', 'M2 2a16 16 0 0 1 16 16']]);
+const scheduledIcon = () => svg('0 0 20 20', 'status-icon scheduled-icon', [['', 'M4 5h12a1.5 1.5 0 0 1 1.5 1.5v9A1.5 1.5 0 0 1 16 17H4a1.5 1.5 0 0 1-1.5-1.5v-9A1.5 1.5 0 0 1 4 5zM2.5 9h15M6.5 2.5v3M13.5 2.5v3']]);
 const arrow = () => svg('0 0 24 24', 'direction-arrow', [['', 'M4 12h15M13 6l6 6-6 6']], {fill: 'none', stroke: 'currentColor', 'stroke-width': '2.4'});
 function sourceLink(f, entry) {
   const slug = value => String(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 -]/g, '').trim().replace(/ +/g, '-');
   const route = entry?.parcours.noParcours ?? f.route, direction = entry?.parcours.codeDirection ?? f.direction;
   return `https://www.rtcquebec.ca/horaires-et-trajets/horaires-des-bus/tous-les-parcours/${route}/${direction}-${slug(entry?.parcours.descriptionDirection || 'direction')}/${f.stop}-${slug(entry?.arret.nom || f.name)}`;
 }
+// The state is carried by the icon beside the countdown (waves = live, calendar = scheduled), never by an extra line.
 function departureBox(h, state, stale, kind) {
-  const remaining = countdown(h), live = h.ntr && !h.annule && !state.error && !stale;
+  const remaining = countdown(h), unconfirmed = Boolean(state.error || stale);
+  const icon = h.annule ? null : h.ntr ? realtimeIcon(unconfirmed) : scheduledIcon();
   const box = el('div', `${kind}${h.annule ? ' cancelled' : ''}`), eta = el('div', `eta${remaining === 'Imminent' ? ' imminent' : ''}`), value = el('span', 'eta-value', remaining);
-  if (live) { value.append(realtimeIcon()); eta.classList.add('has-realtime'); }
+  if (icon) { value.append(icon); eta.classList.add('has-status'); }
   eta.append(value);
   if (remaining !== 'Imminent') eta.append(el('span', 'unit', 'min'));
-  const meta = el('div', live ? 'departure-meta sr-only' : 'departure-meta'); meta.append(document.createTextNode(h.annule ? 'Annulé' : state.error || stale ? 'À confirmer' : h.ntr ? 'Temps réel' : 'Planifié'));
-  box.append(eta, el('div', 'clock-time', timeFormat.format(new Date(h.depart))), meta); return box;
+  const clockTime = timeFormat.format(new Date(h.depart));
+  const meta = el('div', 'departure-meta sr-only', h.annule ? 'Annulé' : unconfirmed ? 'À confirmer' : h.ntr ? 'Temps réel' : 'Planifié');
+  box.append(eta, el('div', 'clock-time', h.annule ? `Annulé · ${clockTime}` : clockTime), meta); return box;
 }
 function menu(f, position, count, menuKey, ui) {
   const key = favoriteKey(f), name = `${f.label || f.name}${f.mode === 'all' ? ' (tous les parcours)' : ''}`, details = el('details', 'tile-menu'), summary = el('summary', '', '⋯'), items = el('div', 'menu-items');
